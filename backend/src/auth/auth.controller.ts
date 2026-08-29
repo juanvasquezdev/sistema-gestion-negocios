@@ -5,9 +5,10 @@ import {
   HttpCode,
   HttpStatus,
   Post,
-  Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { AuthService } from './auth.service';
 import { RegistrarNegocioDto } from './dto/registrar-negocio.dto';
 import { LoginDto } from './dto/login.dto';
@@ -26,8 +27,20 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const resultado = await this.authService.login(dto);
+
+    res.cookie('token', resultado.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000, // 2 horas, igual que la expiración de tu JWT
+    });
+
+    return resultado;
   }
 
   @UseGuards(JwtAuthGuard)
