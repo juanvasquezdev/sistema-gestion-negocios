@@ -72,12 +72,15 @@ export function DashboardShell({
               <SidebarMenu>
                 {navegacion.map((item) => (
                   <SidebarMenuItem key={item.href}>
-                    <SidebarMenuButton asChild isActive={pathname === item.href}>
-                      <Link href={item.href}>
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </Link>
-                    </SidebarMenuButton>
+                    <SidebarMenuButton
+                      isActive={pathname === item.href}
+                      render={
+                        <Link href={item.href}>
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </Link>
+                      }
+                    />
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
