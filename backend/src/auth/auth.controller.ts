@@ -12,6 +12,8 @@ import { AuthService } from './auth.service';
 import { RegistrarNegocioDto } from './dto/registrar-negocio.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { UsuarioActual } from './usuario-actual.decorator';
+import type { UsuarioAutenticado } from './usuario-actual.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -30,7 +32,7 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('perfil')
-  perfil(@Request() req: any) {
-    return req.user;
+  perfil(@UsuarioActual() usuario: UsuarioAutenticado) {
+    return usuario;
   }
 }
