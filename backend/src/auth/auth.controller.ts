@@ -42,6 +42,12 @@ export class AuthController {
 
     return resultado;
   }
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie('token');
+    return { message: 'Sesión cerrada' };
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('perfil')
