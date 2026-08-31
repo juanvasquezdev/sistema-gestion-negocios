@@ -16,8 +16,17 @@ export interface ProveedorInput {
   direccion?: string;
 }
 
-export function listarProveedores() {
-  return api.get<Proveedor[]>('/proveedores');
+export interface RespuestaPaginada<T> {
+  data: T[];
+  total: number;
+  pagina: number;
+  totalPaginas: number;
+}
+
+export function listarProveedores(pagina = 1, limite = 20) {
+  return api.get<RespuestaPaginada<Proveedor>>(
+    `/proveedores?pagina=${pagina}&limite=${limite}`
+  );
 }
 
 export function crearProveedor(data: ProveedorInput) {

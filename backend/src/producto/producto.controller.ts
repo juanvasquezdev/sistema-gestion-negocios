@@ -16,7 +16,8 @@ import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
-
+import { Query } from '@nestjs/common';
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('productos')
 export class ProductoController {
@@ -29,8 +30,11 @@ export class ProductoController {
   }
 
   @Get()
-  listar(@UsuarioActual() usuario: UsuarioAutenticado) {
-    return this.productoService.listar(usuario.negocioId);
+  listar(
+    @UsuarioActual() usuario: UsuarioAutenticado,
+    @Query() paginacion: PaginacionDto,
+  ) {
+    return this.productoService.listar(usuario.negocioId, paginacion);
   }
 
   @Get(':id')

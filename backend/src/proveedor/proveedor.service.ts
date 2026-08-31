@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
-
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @Injectable()
 export class ProveedorService {
   constructor(private prisma: PrismaService) {}
@@ -13,13 +13,19 @@ export class ProveedorService {
     });
   }
 
-  async listar(negocioId: string) {
-    return this.prisma.proveedor.findMany({
-      where: { negocioId },
-      orderBy: { nombre: 'asc' },
-    });
+  async listar(negocioId: string, { pagina, limite }: PaginacionDto) {
+    const skip = (pagina - 1) * limite;
+    const [data, total] = await Promise.all([
+      this.prisma.proveedor.findMany({
+        where: { negocioId },
+        orderBy: { nombre: 'asc' },
+        skip,
+        take: limite,
+      }),
+      this.prisma.proveedor.count({ where: { negocioId } }),
+    ]);
+    return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
-
   async buscarUno(negocioId: string, id: string) {
     const proveedor = await this.prisma.proveedor.findFirst({
       where: { id, negocioId },

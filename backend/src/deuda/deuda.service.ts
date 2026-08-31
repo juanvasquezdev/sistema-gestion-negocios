@@ -5,17 +5,24 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarAbonoDto } from './dto/registrar-abono.dto';
-
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @Injectable()
 export class DeudaService {
   constructor(private prisma: PrismaService) {}
 
-  async listar(negocioId: string) {
-    return this.prisma.deuda.findMany({
-      where: { negocioId },
-      include: { cliente: true, venta: true },
-      orderBy: { createdAt: 'desc' },
-    });
+  async listar(negocioId: string, { pagina, limite }: PaginacionDto) {
+    const skip = (pagina - 1) * limite;
+    const [data, total] = await Promise.all([
+      this.prisma.deuda.findMany({
+        where: { negocioId },
+        include: { cliente: true, venta: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limite,
+      }),
+      this.prisma.deuda.count({ where: { negocioId } }),
+    ]);
+    return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
 
   async buscarUno(negocioId: string, id: string) {

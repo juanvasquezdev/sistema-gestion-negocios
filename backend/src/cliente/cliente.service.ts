@@ -6,7 +6,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
-
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @Injectable()
 export class ClienteService {
   constructor(private prisma: PrismaService) {}
@@ -28,11 +28,18 @@ export class ClienteService {
     });
   }
 
-  async listar(negocioId: string) {
-    return this.prisma.cliente.findMany({
-      where: { negocioId },
-      orderBy: { nombre: 'asc' },
-    });
+  async listar(negocioId: string, { pagina, limite }: PaginacionDto) {
+    const skip = (pagina - 1) * limite;
+    const [data, total] = await Promise.all([
+      this.prisma.cliente.findMany({
+        where: { negocioId },
+        orderBy: { nombre: 'asc' },
+        skip,
+        take: limite,
+      }),
+      this.prisma.cliente.count({ where: { negocioId } }),
+    ]);
+    return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
 
   async buscarUno(negocioId: string, id: string) {

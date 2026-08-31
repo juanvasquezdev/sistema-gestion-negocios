@@ -16,7 +16,8 @@ import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 import { ProveedorService } from './proveedor.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
-
+import { Query } from '@nestjs/common';
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('ADMIN')
 @Controller('proveedores')
@@ -29,10 +30,12 @@ export class ProveedorController {
   }
 
   @Get()
-  listar(@UsuarioActual() usuario: UsuarioAutenticado) {
-    return this.proveedorService.listar(usuario.negocioId);
+  listar(
+    @UsuarioActual() usuario: UsuarioAutenticado,
+    @Query() paginacion: PaginacionDto,
+  ) {
+    return this.proveedorService.listar(usuario.negocioId, paginacion);
   }
-
   @Get(':id')
   buscarUno(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.proveedorService.buscarUno(usuario.negocioId, id);

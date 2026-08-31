@@ -40,6 +40,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Paginacion } from '@/components/paginacion';
 
 const FORM_VACIO: ClienteInput = { nombre: '', documento: '', telefono: '' };
 
@@ -47,6 +48,8 @@ export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
   const [dialogAbierto, setDialogAbierto] = useState(false);
   const [editando, setEditando] = useState<Cliente | null>(null);
@@ -62,8 +65,9 @@ export default function ClientesPage() {
     setCargando(true);
     setError(null);
     try {
-      const data = await listarClientes();
-      setClientes(data);
+      const respuesta = await listarClientes(pagina, 10);
+      setClientes(respuesta.data);
+      setTotalPaginas(respuesta.totalPaginas);
     } catch {
       setError('No se pudieron cargar los clientes.');
     } finally {
@@ -73,7 +77,7 @@ export default function ClientesPage() {
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [pagina]);
 
   function abrirCrear() {
     setEditando(null);
@@ -193,6 +197,8 @@ export default function ClientesPage() {
         </Table>
       )}
 
+      <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
+      
       {/* Diálogo crear/editar */}
       <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>
         <DialogContent>

@@ -14,8 +14,15 @@ export interface ClienteInput {
     telefono?: string;
 }
 
-export function listarClientes() {
-    return api.get<Cliente[]>('/clientes');
+export interface RespuestaPaginada<T> {
+  data: T[];
+  total: number;
+  pagina: number;
+  totalPaginas: number;
+}
+
+export function listarClientes(pagina = 1, limite = 10) {
+  return api.get<RespuestaPaginada<Cliente>>(`/clientes?pagina=${pagina}&limite=${limite}`);
 }
 
 export function crearCliente(data: ClienteInput) {

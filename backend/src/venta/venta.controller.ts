@@ -4,7 +4,8 @@ import { UsuarioActual } from '../auth/usuario-actual.decorator';
 import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 import { VentaService } from './venta.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
-
+import { Query } from '@nestjs/common';
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @UseGuards(JwtAuthGuard)
 @Controller('ventas')
 export class VentaController {
@@ -16,8 +17,11 @@ export class VentaController {
   }
 
   @Get()
-  listar(@UsuarioActual() usuario: UsuarioAutenticado) {
-    return this.ventaService.listar(usuario.negocioId);
+  listar(
+    @UsuarioActual() usuario: UsuarioAutenticado,
+    @Query() paginacion: PaginacionDto,
+  ) {
+    return this.ventaService.listar(usuario.negocioId, paginacion);
   }
 
   @Get(':id')

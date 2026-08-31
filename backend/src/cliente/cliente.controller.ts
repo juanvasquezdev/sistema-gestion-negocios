@@ -16,7 +16,8 @@ import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/roles.decorator';
-
+import { Query } from '@nestjs/common';
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('clientes')
 export class ClienteController {
@@ -28,8 +29,11 @@ export class ClienteController {
   }
 
   @Get()
-  listar(@UsuarioActual() usuario: UsuarioAutenticado) {
-    return this.clienteService.listar(usuario.negocioId);
+  listar(
+    @UsuarioActual() usuario: UsuarioAutenticado,
+    @Query() paginacion: PaginacionDto,
+  ) {
+    return this.clienteService.listar(usuario.negocioId, paginacion);
   }
 
   @Get(':id')

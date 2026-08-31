@@ -5,13 +5,12 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
-
+import { PaginacionDto } from '../common/dto/paginacion.dto';
 @Injectable()
 export class VentaService {
   constructor(private prisma: PrismaService) {}
 
   async crear(negocioId: string, usuarioId: string, dto: CreateVentaDto) {
-    // 1. Validar que el cliente sea de este negocio
     const cliente = await this.prisma.cliente.findFirst({
       where: { id: dto.clienteId, negocioId },
     });
@@ -19,7 +18,6 @@ export class VentaService {
       throw new BadRequestException('El cliente no existe o no pertenece a este negocio');
     }
 
-    // 2. Traer todos los productos pedidos de una sola vez, con su inventario
     const productoIds = dto.detalles.map((d) => d.productoId);
     const productos = await this.prisma.producto.findMany({
       where: { id: { in: productoIds }, negocioId },
@@ -30,8 +28,6 @@ export class VentaService {
       throw new BadRequestException('Uno o más productos no existen o no pertenecen a este negocio');
     }
 
-    // 3. Verificar stock suficiente ANTES de tocar la base de datos
-    //    (el stock siempre vive en gramos/unidades, tal cual lo manda el cliente)
     for (const item of dto.detalles) {
       const producto = productos.find((p) => p.id === item.productoId)!;
       const stockDisponible = producto.inventario?.stockActual ?? 0;
@@ -42,12 +38,6 @@ export class VentaService {
       }
     }
 
-    // 4. Armar los detalles con precio congelado al momento de la venta.
-    //    Regla de negocio: precioVenta se interpreta distinto según la unidad de medida:
-    //    - UNIDAD: precioVenta es por unidad, se multiplica directo por cantidad.
-    //    - GRAMO: precioVenta es por KILOGRAMO (más natural para el usuario que precio/gramo),
-    //      pero la cantidad viaja en gramos (nuestra unidad base de stock). Por eso se
-    //      divide entre 1000 antes de multiplicar.
     const detallesData = dto.detalles.map((item) => {
       const producto = productos.find((p) => p.id === item.productoId)!;
       const precioVenta = Number(producto.precioVenta);
@@ -62,14 +52,13 @@ export class VentaService {
       return {
         productoId: item.productoId,
         cantidad: item.cantidad,
-        precioUnitario: precioVenta, // guardamos el precio de referencia tal cual estaba en el producto
+        precioUnitario: precioVenta,
         subtotal,
       };
     });
 
     const total = detallesData.reduce((acc, d) => acc + d.subtotal, 0);
 
-    // 5. Transacción: crear Venta + DetalleVenta[] + Deuda (si aplica) + descontar stock
     return this.prisma.$transaction(async (tx) => {
       const venta = await tx.venta.create({
         data: {
@@ -108,12 +97,19 @@ export class VentaService {
     });
   }
 
-  async listar(negocioId: string) {
-    return this.prisma.venta.findMany({
-      where: { negocioId },
-      include: { detalles: true, cliente: true },
-      orderBy: { fecha: 'desc' },
-    });
+  async listar(negocioId: string, { pagina, limite }: PaginacionDto) {
+    const skip = (pagina - 1) * limite;
+    const [data, total] = await Promise.all([
+      this.prisma.venta.findMany({
+        where: { negocioId },
+        include: { detalles: true, cliente: true },
+        orderBy: { fecha: 'desc' },
+        skip,
+        take: limite,
+      }),
+      this.prisma.venta.count({ where: { negocioId } }),
+    ]);
+    return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
 
   async buscarUno(negocioId: string, id: string) {

@@ -40,11 +40,14 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Paginacion } from '@/components/paginacion';
 
 const FORM_VACIO: ProveedorInput = { nombre: '', telefono: '', email: '', direccion: '' };
 
 export default function ProveedoresPage() {
   const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,8 +65,9 @@ export default function ProveedoresPage() {
     setCargando(true);
     setError(null);
     try {
-      const data = await listarProveedores();
-      setProveedores(data);
+      const respuesta = await listarProveedores(pagina);
+      setProveedores(respuesta.data);
+      setTotalPaginas(respuesta.totalPaginas);
     } catch {
       setError('No se pudieron cargar los proveedores.');
     } finally {
@@ -73,7 +77,7 @@ export default function ProveedoresPage() {
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [pagina]);
 
   function abrirCrear() {
     setEditando(null);
@@ -165,35 +169,38 @@ export default function ProveedoresPage() {
           Aún no tienes proveedores registrados.
         </p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Teléfono</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Dirección</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {proveedores.map((proveedor) => (
-              <TableRow key={proveedor.id}>
-                <TableCell className="font-medium">{proveedor.nombre}</TableCell>
-                <TableCell>{proveedor.telefono || '—'}</TableCell>
-                <TableCell>{proveedor.email || '—'}</TableCell>
-                <TableCell>{proveedor.direccion || '—'}</TableCell>
-                <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => abrirEditar(proveedor)}>
-                    <Pencil className="h-4 w-4" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => abrirEliminar(proveedor)}>
-                    <Trash2 className="h-4 w-4 text-red-600" />
-                  </Button>
-                </TableCell>
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Teléfono</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Dirección</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {proveedores.map((proveedor) => (
+                <TableRow key={proveedor.id}>
+                  <TableCell className="font-medium">{proveedor.nombre}</TableCell>
+                  <TableCell>{proveedor.telefono || '—'}</TableCell>
+                  <TableCell>{proveedor.email || '—'}</TableCell>
+                  <TableCell>{proveedor.direccion || '—'}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => abrirEditar(proveedor)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => abrirEliminar(proveedor)}>
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+          <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
+        </>
       )}
 
       <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>
