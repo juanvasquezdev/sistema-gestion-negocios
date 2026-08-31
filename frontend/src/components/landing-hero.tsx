@@ -126,11 +126,13 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
             <Button
               className="bg-[#0A0A0A] text-[#FAFAFA] hover:bg-[#2b2b2b]"
               render={<Link href="/login">Iniciar sesión</Link>}
+              nativeButton={false}
             />
             <Button
               variant="outline"
               className="bg-transparent border-[#0A0A0A]/25 text-[#0A0A0A] hover:bg-[#0A0A0A]/5"
               render={<Link href="/registrar">Crear cuenta</Link>}
+              nativeButton={false}
             />
           </motion.div>
         )}
@@ -149,6 +151,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
             <Button
               className="bg-[#0A0A0A] text-[#FAFAFA] hover:bg-[#2b2b2b] mt-2"
               render={<Link href="/dashboard">Ir al panel</Link>}
+              nativeButton={false}
             />
             <button
               onClick={cerrarSesion}
