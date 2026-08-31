@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,11 +15,13 @@ async function bootstrap() {
     }),
   );
 
+  app.useGlobalFilters(new PrismaExceptionFilter());
+
   app.use(cookieParser());
 
   app.enableCors({
-    origin: 'http://localhost:3001', // el puerto donde correrá tu frontend
-    credentials: true, // permite que el navegador envíe/reciba cookies entre dominios distintos
+    origin: 'http://localhost:3001',
+    credentials: true,
   });
 
   await app.listen(process.env.PORT ?? 3000);

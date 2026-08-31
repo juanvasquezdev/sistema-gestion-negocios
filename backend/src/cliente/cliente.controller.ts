@@ -37,7 +37,7 @@ export class ClienteController {
     return this.clienteService.buscarUno(usuario.negocioId, id);
   }
 
-  @Roles('admin') 
+  @Roles('ADMIN')
   @Patch(':id')
   actualizar(
     @UsuarioActual() usuario: UsuarioAutenticado,
@@ -47,7 +47,7 @@ export class ClienteController {
     return this.clienteService.actualizar(usuario.negocioId, id, dto);
   }
 
-  @Roles('admin')
+  @Roles('ADMIN')
   @Delete(':id')
   eliminar(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.clienteService.eliminar(usuario.negocioId, id);
