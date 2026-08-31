@@ -1,3 +1,4 @@
+// backend/src/categoria/categoria.controller.ts
 import {
   Body,
   Controller,
@@ -12,10 +13,13 @@ import { CategoriaService } from './categoria.service';
 import { CrearCategoriaDto } from './dto/crear-categoria.dto';
 import { ActualizarCategoriaDto } from './dto/actualizar-categoria.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { UsuarioActual } from '../auth/usuario-actual.decorator';
 import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('categoria')
 export class CategoriaController {
   constructor(private readonly categoriaService: CategoriaService) {}

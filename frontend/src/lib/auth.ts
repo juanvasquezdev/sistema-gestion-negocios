@@ -19,3 +19,13 @@ export function login(email: string, password: string) {
 export function obtenerPerfil() {
   return api.get<Usuario>('/auth/perfil');
 }
+export interface RegistrarNegocioInput {
+  nombreNegocio: string;
+  nombreUsuario: string;
+  email: string;
+  password: string;
+}
+
+export function registrarNegocio(data: RegistrarNegocioInput) {
+  return api.post<LoginResponse>('/auth/registrar-negocio', data);
+}

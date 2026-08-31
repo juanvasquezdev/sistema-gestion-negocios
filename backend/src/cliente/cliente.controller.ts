@@ -14,8 +14,10 @@ import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 import { ClienteService } from './cliente.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('clientes')
 export class ClienteController {
   constructor(private clienteService: ClienteService) {}
@@ -35,6 +37,7 @@ export class ClienteController {
     return this.clienteService.buscarUno(usuario.negocioId, id);
   }
 
+  @Roles('admin') 
   @Patch(':id')
   actualizar(
     @UsuarioActual() usuario: UsuarioAutenticado,
@@ -44,6 +47,7 @@ export class ClienteController {
     return this.clienteService.actualizar(usuario.negocioId, id, dto);
   }
 
+  @Roles('admin')
   @Delete(':id')
   eliminar(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.clienteService.eliminar(usuario.negocioId, id);

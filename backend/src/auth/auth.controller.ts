@@ -21,8 +21,20 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('registrar-negocio')
-  registrarNegocio(@Body() dto: RegistrarNegocioDto) {
-    return this.authService.registrarNegocio(dto);
+  async registrarNegocio(
+    @Body() dto: RegistrarNegocioDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const resultado = await this.authService.registrarNegocio(dto);
+
+    res.cookie('token', resultado.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 2 * 60 * 60 * 1000,
+    });
+
+    return resultado;
   }
 
   @Post('login')

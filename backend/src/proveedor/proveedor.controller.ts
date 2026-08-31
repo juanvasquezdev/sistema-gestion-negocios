@@ -1,3 +1,5 @@
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
 import {
   Controller,
   Get,
@@ -15,7 +17,8 @@ import { ProveedorService } from './proveedor.service';
 import { CreateProveedorDto } from './dto/create-proveedor.dto';
 import { UpdateProveedorDto } from './dto/update-proveedor.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 @Controller('proveedores')
 export class ProveedorController {
   constructor(private proveedorService: ProveedorService) {}
