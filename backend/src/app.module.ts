@@ -10,6 +10,7 @@ import { ProveedorModule } from './proveedor/proveedor.module';
 import { ProductoModule } from './producto/producto.module';
 import { VentaModule } from './venta/venta.module';
 import { DeudaModule } from './deuda/deuda.module';
+import { ResumenModule } from './resumen/resumen.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
@@ -21,6 +22,7 @@ import { DeudaModule } from './deuda/deuda.module';
     ProductoModule,
     VentaModule,
     DeudaModule,
+    ResumenModule,
   ],
   controllers: [AppController],
   providers: [AppService],
