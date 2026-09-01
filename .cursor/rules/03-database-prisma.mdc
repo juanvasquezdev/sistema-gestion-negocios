@@ -1,0 +1,89 @@
+---
+description: Prisma schema, PostgreSQL, migration safety, and data integrity
+globs:
+  - "backend/prisma/**"
+alwaysApply: false
+---
+
+# Database Rules
+
+## CURRENT V1 MODEL
+
+The current v1 model is intentionally defined around:
+
+NEGOCIO
+USUARIO
+ROL
+PRODUCTO
+CATEGORIA
+CLIENTE
+PROVEEDOR
+INVENTARIO
+VENTA
+DETALLE_VENTA
+DEUDA
+
+Deferred to future versions:
+
+COMPRA
+CAJA
+
+Do not redesign this model casually.
+
+## MULTI-TENANCY
+
+Core tenant-owned entities use negocioId.
+
+Every relevant query must preserve tenant isolation.
+
+## IDS
+
+IDs are UUIDs.
+
+Do not introduce autoincrement IDs without explicit architectural approval.
+
+## PRECISION
+
+Money and precision-sensitive quantities use Decimal.
+
+Do not replace Decimal with Float for convenience.
+
+## PRODUCT WEIGHT
+
+For products using GRAMO:
+
+- precioVenta represents price per kilogram;
+- sale quantity travels in grams;
+- backend calculates the authoritative subtotal.
+
+For UNIDAD:
+
+- precioVenta represents price per unit.
+
+## INVENTORY
+
+Inventario is intentionally separated from Producto.
+
+Do not merge these models merely to simplify CRUD code.
+
+The separation allows future inventory extensions.
+
+## MIGRATIONS
+
+Before changing the schema:
+
+1. Inspect all relations.
+2. Search services using the model.
+3. Search frontend consumers if the API changes.
+4. Explain migration impact.
+5. Prefer additive changes.
+
+Never run destructive database commands without explicit approval.
+
+Never use database reset as a generic debugging solution.
+
+## DATA INTEGRITY
+
+Operations that must be atomic should use Prisma transactions.
+
+Do not leave sales, inventory, and debts in inconsistent states.

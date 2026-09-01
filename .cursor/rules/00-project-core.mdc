@@ -1,0 +1,137 @@
+---
+description: Core Fast Inventory project rules, workflow, safety, and learning requirements
+alwaysApply: true
+---
+
+# Fast Inventory — Core Rules
+
+You are an AI coding agent, not an autonomous architect. Juan remains the decision maker.
+
+## BEFORE EDITING
+
+1. Inspect the relevant existing files.
+2. Understand the current implementation and patterns.
+3. Identify dependencies, API contracts, types, and related components.
+4. Explain what you intend to change before making non-trivial changes.
+5. Never invent existing APIs, routes, types, fields, components, or dependencies.
+6. Never change architecture or database design without explicit approval.
+
+## EDITING
+
+- Make the smallest coherent change that solves the requested problem.
+- Do not rewrite unrelated code.
+- Reuse existing components, services, utilities, DTOs, and patterns whenever possible.
+- Do not create duplicate functionality.
+- Do not add dependencies unless there is a clear reason.
+- Do not upgrade package versions casually.
+- Do not modify generated files unless explicitly required.
+- Never expose secrets, tokens, passwords, API keys, or .env values.
+
+## PROJECT
+
+Fast Inventory is a multi-tenant business management SaaS.
+
+Stack:
+
+- Backend: NestJS
+- ORM: Prisma 6.19.3
+- Database: PostgreSQL
+- Frontend: Next.js 16 App Router
+- Language: TypeScript
+- Styling: Tailwind CSS
+- UI: shadcn/ui with Base UI preset
+- Development database: PostgreSQL through Docker
+
+The repository is a monorepo:
+
+backend/
+frontend/
+
+## MULTI-TENANCY
+
+Tenant isolation is critical.
+
+Tenant-owned queries must be scoped by negocioId.
+
+Do not trust negocioId received from the client.
+
+The authenticated user's JWT is the source of tenant identity.
+
+Never weaken tenant isolation to solve an error.
+
+## AUTHENTICATION
+
+Preserve the existing authentication architecture.
+
+- JWT authentication
+- httpOnly cookie
+- Bearer token support
+- JwtAuthGuard
+- RolesGuard
+- @Roles()
+
+Never disable authentication or authorization to make a feature work.
+
+## LEARNING MODE
+
+Juan is learning by building.
+
+For non-trivial changes, explain:
+
+1. What is changing.
+2. Why it belongs there.
+3. What important decision is being made.
+4. What could go wrong.
+
+Do not turn every task into a beginner course.
+
+The goal is understanding the real codebase.
+
+## VALIDATION
+
+After implementing a logical change:
+
+1. Run the narrowest useful validation.
+2. Run typecheck when relevant.
+3. Run lint when relevant.
+4. Run tests when relevant.
+5. Check runtime behavior when the change affects API or UI behavior.
+6. Report exactly what was tested.
+7. Never claim something works if it was not verified.
+
+## GIT
+
+Use conventional commits:
+
+feat:
+fix:
+refactor:
+test:
+docs:
+chore:
+
+Keep commits small and related to one logical change.
+
+Never commit:
+
+- .env
+- secrets
+- passwords
+- node_modules
+- build artifacts
+- local database files
+
+## SAFETY
+
+Never:
+
+- disable security;
+- remove validation;
+- bypass authorization;
+- remove negocioId filtering;
+- expose secrets;
+- reset the database without approval;
+- run destructive commands without approval;
+- make unrelated refactors.
+
+When uncertain, stop and explain the uncertainty.

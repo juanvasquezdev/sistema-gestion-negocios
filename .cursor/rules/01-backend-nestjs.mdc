@@ -1,0 +1,143 @@
+---
+description: NestJS backend conventions, Prisma, authentication, authorization, and multi-tenancy
+globs:
+  - "backend/**/*.ts"
+alwaysApply: false
+---
+
+# Backend Rules
+
+## Architecture
+
+Follow the existing NestJS architecture.
+
+Prefer:
+
+Controller
+↓
+Service
+↓
+Prisma
+
+Controllers should remain thin.
+
+Business logic belongs in services.
+
+DTOs are responsible for input validation.
+
+Before creating a new module, inspect an existing working module.
+
+## MULTI-TENANCY
+
+Every tenant-owned operation must verify negocioId.
+
+Preferred pattern:
+
+findFirst({
+  where: {
+    id,
+    negocioId
+  }
+})
+
+Do NOT use:
+
+findUnique({
+  where: {
+    id
+  }
+})
+
+when tenant isolation is required.
+
+Never trust negocioId from the frontend.
+
+Obtain tenant identity from the authenticated user/JWT.
+
+## AUTHENTICATION
+
+Preserve:
+
+- JwtStrategy
+- JwtAuthGuard
+- @UsuarioActual()
+- JWT
+- httpOnly cookies
+- Bearer support
+
+Do not weaken authentication.
+
+## AUTHORIZATION
+
+Preserve RolesGuard and @Roles().
+
+Current roles:
+
+ADMIN
+VENDEDOR
+
+Role names are uppercase.
+
+Never use lowercase role values such as:
+
+admin
+vendedor
+
+unless the existing code explicitly requires it.
+
+## PRISMA
+
+Use Prisma 6.19.3.
+
+Do not upgrade Prisma without explicit approval.
+
+Respect existing schema decisions.
+
+Money and precision-sensitive quantities must use Decimal.
+
+## TRANSACTIONS
+
+Use Prisma transactions when several database operations must succeed or fail together.
+
+Examples:
+
+- Product + Inventory creation
+- Sale + Sale details + stock reduction
+- Sale + debt creation when applicable
+
+Never leave partially completed business operations.
+
+## BUSINESS CALCULATIONS
+
+Backend calculations are authoritative.
+
+The frontend may calculate values for preview only.
+
+Do not move authoritative business calculations to the frontend.
+
+## ERROR HANDLING
+
+Reuse the global PrismaExceptionFilter.
+
+Do not duplicate global Prisma error translation in every service.
+
+## API CHANGES
+
+Before changing an endpoint or response:
+
+1. Find all consumers.
+2. Check frontend API clients.
+3. Check related pages/components.
+4. Update the contract consistently.
+5. Validate backend and frontend.
+
+## SECURITY
+
+Never:
+
+- expose passwords;
+- expose JWT secrets;
+- reveal whether an email exists during login;
+- bypass tenant isolation;
+- remove authorization checks;
+- trust client-provided negocioId.
