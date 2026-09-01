@@ -12,7 +12,7 @@ import {
   eliminarProducto,
 } from '@/lib/productos';
 import { Categoria, listarCategorias, crearCategoria } from '@/lib/categorias';
-import { Proveedor, listarProveedores, crearProveedor } from '@/lib/proveedores';
+import { ProveedorSelector, listarProveedoresSelector, crearProveedor } from '@/lib/proveedores';
 import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { Pencil, Trash2, Plus } from 'lucide-react';
+import { Paginacion } from '@/components/paginacion';
 
 const ESTILO_SELECT =
   'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
@@ -75,7 +76,7 @@ function formatoNumero(valor: string | number) {
 export default function ProductosPage() {
   const [productos, setProductos] = useState<Producto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  const [proveedores, setProveedores] = useState<Proveedor[]>([]);
+  const [proveedores, setProveedores] = useState<ProveedorSelector[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -85,7 +86,6 @@ export default function ProductosPage() {
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
-  // Crear categoría/proveedor al vuelo, sin salir del formulario
   const [creandoCategoria, setCreandoCategoria] = useState(false);
   const [nombreNuevaCategoria, setNombreNuevaCategoria] = useState('');
   const [guardandoCategoria, setGuardandoCategoria] = useState(false);
@@ -93,6 +93,9 @@ export default function ProductosPage() {
   const [creandoProveedor, setCreandoProveedor] = useState(false);
   const [nombreNuevoProveedor, setNombreNuevoProveedor] = useState('');
   const [guardandoProveedor, setGuardandoProveedor] = useState(false);
+
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
 
   const [porEliminar, setPorEliminar] = useState<Producto | null>(null);
   const [eliminando, setEliminando] = useState(false);
@@ -103,11 +106,12 @@ export default function ProductosPage() {
     setError(null);
     try {
       const [prods, cats, provs] = await Promise.all([
-        listarProductos(),
+        listarProductos(pagina),
         listarCategorias(),
-        listarProveedores(),
+        listarProveedoresSelector(),
       ]);
-      setProductos(prods);
+      setProductos(prods.data);
+      setTotalPaginas(prods.totalPaginas);
       setCategorias(cats);
       setProveedores(provs);
     } catch {
@@ -119,7 +123,7 @@ export default function ProductosPage() {
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [pagina]);
 
   function abrirCrear() {
     setEditando(null);
@@ -271,53 +275,57 @@ export default function ProductosPage() {
       ) : productos.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aún no tienes productos registrados.</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Categoría</TableHead>
-              <TableHead>Proveedor</TableHead>
-              <TableHead>Precio</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="text-right">Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {productos.map((producto) => {
-              const bajoStock =
-                producto.inventario?.stockMinimo &&
-                Number(producto.inventario.stockActual) <= Number(producto.inventario.stockMinimo);
-              return (
-                <TableRow key={producto.id}>
-                  <TableCell className="font-medium">{producto.nombre}</TableCell>
-                  <TableCell>{producto.categoria.nombre}</TableCell>
-                  <TableCell>{producto.proveedor?.nombre || '—'}</TableCell>
-                  <TableCell>
-                    ${formatoNumero(producto.precioVenta)}
-                    <span className="text-muted-foreground text-xs">
-                      {' '}
-                      /{producto.unidadMedida === 'GRAMO' ? 'kg' : 'unidad'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span className={bajoStock ? 'text-red-600 font-medium' : ''}>
-                      {formatoNumero(producto.inventario?.stockActual ?? 0)}
-                      {producto.unidadMedida === 'GRAMO' ? ' g' : ''}
-                    </span>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => abrirEditar(producto)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" onClick={() => abrirEliminar(producto)}>
-                      <Trash2 className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Categoría</TableHead>
+                <TableHead>Proveedor</TableHead>
+                <TableHead>Precio</TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {productos.map((producto) => {
+                const bajoStock =
+                  producto.inventario?.stockMinimo &&
+                  Number(producto.inventario.stockActual) <= Number(producto.inventario.stockMinimo);
+                return (
+                  <TableRow key={producto.id}>
+                    <TableCell className="font-medium">{producto.nombre}</TableCell>
+                    <TableCell>{producto.categoria.nombre}</TableCell>
+                    <TableCell>{producto.proveedor?.nombre || '—'}</TableCell>
+                    <TableCell>
+                      ${formatoNumero(producto.precioVenta)}
+                      <span className="text-muted-foreground text-xs">
+                        {' '}
+                        /{producto.unidadMedida === 'GRAMO' ? 'kg' : 'unidad'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={bajoStock ? 'text-red-600 font-medium' : ''}>
+                        {formatoNumero(producto.inventario?.stockActual ?? 0)}
+                        {producto.unidadMedida === 'GRAMO' ? ' g' : ''}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon" onClick={() => abrirEditar(producto)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => abrirEliminar(producto)}>
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+
+          <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
+        </>
       )}
 
       <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>

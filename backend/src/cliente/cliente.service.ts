@@ -42,6 +42,15 @@ export class ClienteService {
     return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
 
+  async listarParaSelector(negocioId: string) {
+    return this.prisma.cliente.findMany({
+      where: { negocioId },
+      select: { id: true, nombre: true },
+      orderBy: { nombre: 'asc' },
+      take: 500,
+    });
+  }
+
   async buscarUno(negocioId: string, id: string) {
     const cliente = await this.prisma.cliente.findFirst({
       where: { id, negocioId },

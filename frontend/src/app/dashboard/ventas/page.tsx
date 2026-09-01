@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { Venta, VentaInput, listarVentas, crearVenta } from '@/lib/ventas';
-import { Cliente, listarClientes } from '@/lib/clientes';
-import { Producto, listarProductos } from '@/lib/productos';
+import { ClienteSelector, listarClientesSelector } from '@/lib/clientes';
+import { ProductoSelector, listarProductosSelector } from '@/lib/productos';
 import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Plus, Trash2 } from 'lucide-react';
+import { Paginacion } from '@/components/paginacion';
 
 const ESTILO_SELECT =
   'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50';
@@ -48,8 +49,8 @@ function formatoFecha(iso: string) {
 
 export default function VentasPage() {
   const [ventas, setVentas] = useState<Venta[]>([]);
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [productos, setProductos] = useState<Producto[]>([]);
+  const [clientes, setClientes] = useState<ClienteSelector[]>([]);
+  const [productos, setProductos] = useState<ProductoSelector[]>([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,12 +61,20 @@ export default function VentasPage() {
   const [guardando, setGuardando] = useState(false);
   const [errorForm, setErrorForm] = useState<string | null>(null);
 
+  const [pagina, setPagina] = useState(1);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+
   async function cargar() {
     setCargando(true);
     setError(null);
     try {
-      const [v, c, p] = await Promise.all([listarVentas(), listarClientes(), listarProductos()]);
-      setVentas(v);
+      const [v, c, p] = await Promise.all([
+        listarVentas(pagina),
+        listarClientesSelector(),
+        listarProductosSelector(),
+      ]);
+      setVentas(v.data);
+      setTotalPaginas(v.totalPaginas);
       setClientes(c);
       setProductos(p);
     } catch {
@@ -77,7 +86,7 @@ export default function VentasPage() {
 
   useEffect(() => {
     cargar();
-  }, []);
+  }, [pagina]);
 
   function abrirCrear() {
     setClienteId('');
@@ -174,38 +183,42 @@ export default function VentasPage() {
       ) : ventas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aún no tienes ventas registradas.</p>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Fecha</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead>Productos</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Estado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ventas.map((venta) => (
-              <TableRow key={venta.id}>
-                <TableCell>{formatoFecha(venta.fecha)}</TableCell>
-                <TableCell>{venta.cliente?.nombre ?? '—'}</TableCell>
-                <TableCell>{venta.detalles.length} ítem(s)</TableCell>
-                <TableCell className="font-medium">{formatoMoneda(venta.total)}</TableCell>
-                <TableCell>
-                  <span
-                    className={
-                      venta.estado === 'PAGADA'
-                        ? 'text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium'
-                        : 'text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full text-xs font-medium'
-                    }
-                  >
-                    {venta.estado === 'PAGADA' ? 'Pagada' : 'Pendiente'}
-                  </span>
-                </TableCell>
+        <>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Productos</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Estado</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {ventas.map((venta) => (
+                <TableRow key={venta.id}>
+                  <TableCell>{formatoFecha(venta.fecha)}</TableCell>
+                  <TableCell>{venta.cliente?.nombre ?? '—'}</TableCell>
+                  <TableCell>{venta.detalles.length} ítem(s)</TableCell>
+                  <TableCell className="font-medium">{formatoMoneda(venta.total)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={
+                        venta.estado === 'PAGADA'
+                          ? 'text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-xs font-medium'
+                          : 'text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full text-xs font-medium'
+                      }
+                    >
+                      {venta.estado === 'PAGADA' ? 'Pagada' : 'Pendiente'}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <Paginacion pagina={pagina} totalPaginas={totalPaginas} onCambiar={setPagina} />
+        </>
       )}
 
       <Dialog open={dialogAbierto} onOpenChange={setDialogAbierto}>

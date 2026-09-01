@@ -23,10 +23,19 @@ export interface RespuestaPaginada<T> {
   totalPaginas: number;
 }
 
+export interface ProveedorSelector {
+  id: string;
+  nombre: string;
+}
+
 export function listarProveedores(pagina = 1, limite = 20) {
   return api.get<RespuestaPaginada<Proveedor>>(
     `/proveedores?pagina=${pagina}&limite=${limite}`
   );
+}
+
+export function listarProveedoresSelector() {
+  return api.get<ProveedorSelector[]>('/proveedores/selector');
 }
 
 export function crearProveedor(data: ProveedorInput) {

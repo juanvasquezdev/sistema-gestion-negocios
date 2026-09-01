@@ -1,5 +1,6 @@
 import { api } from './api';
 import type { Cliente } from './clientes';
+import type { RespuestaPaginada } from './proveedores';
 
 export interface Deuda {
   id: string;
@@ -14,8 +15,10 @@ export interface Deuda {
   cliente?: Cliente;
 }
 
-export function listarDeudas() {
-  return api.get<Deuda[]>('/deudas');
+export function listarDeudas(pagina = 1, limite = 20) {
+  return api.get<RespuestaPaginada<Deuda>>(
+    `/deudas?pagina=${pagina}&limite=${limite}`
+  );
 }
 
 export function registrarAbono(id: string, monto: number) {

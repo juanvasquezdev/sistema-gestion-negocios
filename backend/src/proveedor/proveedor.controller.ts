@@ -36,6 +36,12 @@ export class ProveedorController {
   ) {
     return this.proveedorService.listar(usuario.negocioId, paginacion);
   }
+
+  @Get('selector')
+  listarParaSelector(@UsuarioActual() usuario: UsuarioAutenticado) {
+    return this.proveedorService.listarParaSelector(usuario.negocioId);
+  }
+
   @Get(':id')
   buscarUno(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.proveedorService.buscarUno(usuario.negocioId, id);

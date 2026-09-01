@@ -21,8 +21,17 @@ export interface RespuestaPaginada<T> {
   totalPaginas: number;
 }
 
+export interface ClienteSelector {
+  id: string;
+  nombre: string;
+}
+
 export function listarClientes(pagina = 1, limite = 10) {
   return api.get<RespuestaPaginada<Cliente>>(`/clientes?pagina=${pagina}&limite=${limite}`);
+}
+
+export function listarClientesSelector() {
+  return api.get<ClienteSelector[]>('/clientes/selector');
 }
 
 export function crearCliente(data: ClienteInput) {

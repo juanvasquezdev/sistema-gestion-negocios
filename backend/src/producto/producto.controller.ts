@@ -37,6 +37,11 @@ export class ProductoController {
     return this.productoService.listar(usuario.negocioId, paginacion);
   }
 
+  @Get('selector')
+  listarParaSelector(@UsuarioActual() usuario: UsuarioAutenticado) {
+    return this.productoService.listarParaSelector(usuario.negocioId);
+  }
+
   @Get(':id')
   buscarUno(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.productoService.buscarUno(usuario.negocioId, id);

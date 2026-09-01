@@ -1,6 +1,6 @@
-// frontend/src/lib/ventas.ts
 import { api } from './api';
 import type { Cliente } from './clientes';
+import type { RespuestaPaginada } from './proveedores';
 
 export interface DetalleVenta {
   id: string;
@@ -33,8 +33,10 @@ export interface VentaInput {
   detalles: DetalleVentaInput[];
 }
 
-export function listarVentas() {
-  return api.get<Venta[]>('/ventas');
+export function listarVentas(pagina = 1, limite = 20) {
+  return api.get<RespuestaPaginada<Venta>>(
+    `/ventas?pagina=${pagina}&limite=${limite}`
+  );
 }
 
 export function crearVenta(data: VentaInput) {

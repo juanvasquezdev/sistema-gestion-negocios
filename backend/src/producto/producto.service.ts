@@ -61,6 +61,21 @@ export class ProductoService {
     ]);
     return { data, total, pagina, totalPaginas: Math.max(1, Math.ceil(total / limite)) };
   }
+
+  async listarParaSelector(negocioId: string) {
+    return this.prisma.producto.findMany({
+      where: { negocioId, activo: true },
+      select: {
+        id: true,
+        nombre: true,
+        precioVenta: true,
+        unidadMedida: true,
+      },
+      orderBy: { nombre: 'asc' },
+      take: 1000,
+    });
+  }
+
   async buscarUno(negocioId: string, id: string) {
     const producto = await this.prisma.producto.findFirst({
       where: { id, negocioId },

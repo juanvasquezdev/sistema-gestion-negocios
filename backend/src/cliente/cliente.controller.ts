@@ -36,6 +36,11 @@ export class ClienteController {
     return this.clienteService.listar(usuario.negocioId, paginacion);
   }
 
+  @Get('selector')
+  listarParaSelector(@UsuarioActual() usuario: UsuarioAutenticado) {
+    return this.clienteService.listarParaSelector(usuario.negocioId);
+  }
+
   @Get(':id')
   buscarUno(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.clienteService.buscarUno(usuario.negocioId, id);
