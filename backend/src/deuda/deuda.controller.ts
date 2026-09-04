@@ -1,12 +1,15 @@
-import { Controller, Get, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsuarioActual } from '../auth/usuario-actual.decorator';
 import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 import { DeudaService } from './deuda.service';
 import { RegistrarAbonoDto } from './dto/registrar-abono.dto';
-import { Query } from '@nestjs/common';
 import { PaginacionDto } from '../common/dto/paginacion.dto';
-@UseGuards(JwtAuthGuard)
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN', 'VENDEDOR')
 @Controller('deudas')
 export class DeudaController {
   constructor(private deudaService: DeudaService) {}
@@ -18,6 +21,7 @@ export class DeudaController {
   ) {
     return this.deudaService.listar(usuario.negocioId, paginacion);
   }
+
   @Get(':id')
   buscarUno(@UsuarioActual() usuario: UsuarioAutenticado, @Param('id') id: string) {
     return this.deudaService.buscarUno(usuario.negocioId, id);

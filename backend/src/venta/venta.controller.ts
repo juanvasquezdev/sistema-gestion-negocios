@@ -1,12 +1,15 @@
-import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards, Query } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UsuarioActual } from '../auth/usuario-actual.decorator';
 import type { UsuarioAutenticado } from '../auth/usuario-actual.decorator';
 import { VentaService } from './venta.service';
 import { CreateVentaDto } from './dto/create-venta.dto';
-import { Query } from '@nestjs/common';
 import { PaginacionDto } from '../common/dto/paginacion.dto';
-@UseGuards(JwtAuthGuard)
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/roles.decorator';
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN', 'VENDEDOR')
 @Controller('ventas')
 export class VentaController {
   constructor(private ventaService: VentaService) {}
