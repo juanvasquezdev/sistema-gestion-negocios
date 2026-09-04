@@ -20,7 +20,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: ['http://localhost:3001', 'https://sistema-gestion-negocios.vercel.app'],
     credentials: true,
   });
 
