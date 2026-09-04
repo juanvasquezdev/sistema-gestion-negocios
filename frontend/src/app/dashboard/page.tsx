@@ -151,8 +151,8 @@ export default function ResumenPage() {
                       width={80}
                     />
                     <Tooltip
-                      formatter={(value: number) => formatoMoneda(value)}
-                      labelFormatter={(label) => formatoDiaCorto(label)}
+                     formatter={(value) => formatoMoneda(Number(value))}
+                     labelFormatter={(label) => formatoDiaCorto(String(label))}
                     />
                     <Line
                       type="monotone"
