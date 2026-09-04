@@ -30,7 +30,7 @@ export class AuthController {
     res.cookie('token', resultado.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 2 * 60 * 60 * 1000,
     });
 
@@ -48,16 +48,21 @@ export class AuthController {
     res.cookie('token', resultado.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 2 * 60 * 60 * 1000, // 2 horas, igual que la expiración de tu JWT
     });
 
     return resultado;
   }
+
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   logout(@Res({ passthrough: true }) res: Response) {
-    res.clearCookie('token');
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    });
     return { message: 'Sesión cerrada' };
   }
 
