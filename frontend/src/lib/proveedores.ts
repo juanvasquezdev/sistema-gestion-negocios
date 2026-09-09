@@ -1,4 +1,5 @@
 import { api } from './api';
+import type { RespuestaPaginada } from './paginacion';
 
 export interface Proveedor {
   id: string;
@@ -14,13 +15,6 @@ export interface ProveedorInput {
   telefono?: string;
   email?: string;
   direccion?: string;
-}
-
-export interface RespuestaPaginada<T> {
-  data: T[];
-  total: number;
-  pagina: number;
-  totalPaginas: number;
 }
 
 export interface ProveedorSelector {

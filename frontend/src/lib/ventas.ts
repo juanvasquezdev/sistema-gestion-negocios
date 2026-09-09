@@ -1,6 +1,6 @@
 import { api } from './api';
 import type { Cliente } from './clientes';
-import type { RespuestaPaginada } from './proveedores';
+import type { RespuestaPaginada } from './paginacion';
 
 export interface DetalleVenta {
   id: string;

@@ -1,4 +1,5 @@
 import {api} from './api';
+import type { RespuestaPaginada } from './paginacion';
 
 export interface Cliente {
     id: string;
@@ -12,13 +13,6 @@ export interface ClienteInput {
     nombre: string;
     documento?: string;
     telefono?: string;
-}
-
-export interface RespuestaPaginada<T> {
-  data: T[];
-  total: number;
-  pagina: number;
-  totalPaginas: number;
 }
 
 export interface ClienteSelector {

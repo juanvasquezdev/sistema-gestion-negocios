@@ -1,7 +1,7 @@
 import { api } from './api';
 import type { Categoria } from './categorias';
 import type { Proveedor } from './proveedores';
-import type { RespuestaPaginada } from './proveedores';
+import type { RespuestaPaginada } from './paginacion';
 
 export type UnidadMedida = 'UNIDAD' | 'GRAMO';
 
