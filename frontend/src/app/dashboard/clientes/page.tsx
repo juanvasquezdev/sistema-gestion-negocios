@@ -76,7 +76,9 @@ export default function ClientesPage() {
   }
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      cargar();
+    });
   }, [pagina]);
 
   function abrirCrear() {

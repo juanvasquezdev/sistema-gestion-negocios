@@ -2,14 +2,19 @@
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
 
-interface ApiOptions extends RequestInit {
-  body?: any;
+interface ApiOptions extends Omit<RequestInit, 'body'> {
+  body?: unknown;
+}
+
+interface ApiErrorBody {
+  message?: string;
+  [key: string]: unknown;
 }
 
 class ApiError extends Error {
   constructor(
     public status: number,
-    public data: any,
+    public data: ApiErrorBody,
   ) {
     super(data?.message ?? 'Error en la petición');
   }
@@ -39,8 +44,8 @@ async function apiFetch<T>(endpoint: string, options: ApiOptions = {}): Promise<
 
 export const api = {
   get: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: 'GET' }),
-  post: <T>(endpoint: string, body?: any) => apiFetch<T>(endpoint, { method: 'POST', body }),
-  patch: <T>(endpoint: string, body?: any) => apiFetch<T>(endpoint, { method: 'PATCH', body }),
+  post: <T>(endpoint: string, body?: unknown) => apiFetch<T>(endpoint, { method: 'POST', body }),
+  patch: <T>(endpoint: string, body?: unknown) => apiFetch<T>(endpoint, { method: 'PATCH', body }),
   delete: <T>(endpoint: string) => apiFetch<T>(endpoint, { method: 'DELETE' }),
 };
 

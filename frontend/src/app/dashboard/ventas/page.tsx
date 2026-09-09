@@ -85,7 +85,9 @@ export default function VentasPage() {
   }
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      cargar();
+    });
   }, [pagina]);
 
   function abrirCrear() {

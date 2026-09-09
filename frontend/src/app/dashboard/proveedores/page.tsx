@@ -76,7 +76,9 @@ export default function ProveedoresPage() {
   }
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      cargar();
+    });
   }, [pagina]);
 
   function abrirCrear() {

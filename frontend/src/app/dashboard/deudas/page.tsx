@@ -72,7 +72,9 @@ export default function DeudasPage() {
   }
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      cargar();
+    });
   }, [pagina]);
 
   function abrirAbono(deuda: Deuda) {

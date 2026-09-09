@@ -17,7 +17,7 @@ export interface JwtPayload {
 // cookies httpOnly también queda cubierto.
 const extraerDesdeCookieOHeader = (req: Request): string | null => {
   if (req.cookies && req.cookies.token) {
-    return req.cookies.token;
+    return req.cookies.token as string;
   }
   return ExtractJwt.fromAuthHeaderAsBearerToken()(req);
 };

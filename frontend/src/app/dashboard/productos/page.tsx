@@ -122,7 +122,9 @@ export default function ProductosPage() {
   }
 
   useEffect(() => {
-    cargar();
+    queueMicrotask(() => {
+      cargar();
+    });
   }, [pagina]);
 
   function abrirCrear() {
