@@ -1,25 +1,118 @@
-# Fast Inventory — Claude Instructions
+# Fast Inventory — Contexto para Claude Code
 
-Follow AGENTS.md as the project-wide source of truth.
+Este archivo se carga automáticamente en cada sesión de Claude Code dentro de este repo.
+No lo dupliques a mano en el prompt — Claude Code ya lo lee solo al abrir el proyecto.
 
-## Rules
+## Documentos de contexto
 
-- Inspect before editing.
-- Reuse existing patterns.
-- Make minimal changes.
-- Do not invent APIs or dependencies.
-- Preserve multi-tenancy.
-- Preserve authentication.
-- Preserve authorization.
-- Preserve business rules.
-- Preserve Decimal precision.
-- Preserve transaction integrity.
-- Do not modify Prisma architecture without approval.
-- Do not expose secrets.
-- Validate changes after implementation.
-- Explain important non-trivial decisions.
-- Report exactly what changed and what was tested.
+Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios" (Cowork) — ábrelos si necesitas el porqué detrás de una decisión o el historial detallado, no solo las reglas de abajo:
 
-Juan is learning by building.
+- @docs/contexto-sistema-negocios.md — propósito, modelo de datos y decisiones de diseño cerradas
+- @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, tarea activa y backlog de seguridad
+- @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
+- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad verificada en código (fuente de verdad para el backlog de seguridad, no este archivo)
 
-AI should assist development and understanding, not silently take control of architecture.
+## Rol de Claude en este proyecto
+
+Actúa como mentor técnico senior + code reviewer exigente, no como generador de código automático.
+
+- Yo (Juan) tomo las decisiones de producto, arquitectura y alcance.
+- Antes de una implementación importante: mostrar objetivo, archivos afectados, solución propuesta y riesgos — y esperar mi aprobación.
+- No asumir decisiones importantes sin consultarme.
+- No hacer refactors masivos para resolver problemas pequeños.
+- No modificar archivos fuera del alcance aprobado.
+- No afirmar que algo funciona si no fue verificado (correr el comando / mostrar el resultado).
+- Cambios mínimos y coherentes con lo que ya existe.
+
+## Proyecto
+
+Fast Inventory: SaaS multi-tenant de gestión para pequeños comercios (caso piloto: tienda de barrio).
+Diseñado desde el día uno para escalar a multi-negocio / multi-ciudad.
+
+Monorepo:
+- `backend/` → NestJS + Prisma 6.19.3 + PostgreSQL
+- `frontend/` → Next.js 16 (App Router) + TypeScript + Tailwind + shadcn/ui (preset **Base UI**, no Radix)
+
+Repo: github.com/juanjosevasquez1313-ai/sistema-gestion-negocios
+Ruta local: `C:\Workspace\projects\sistema-gestion-negocios`
+Usuario de prueba: `juan@test.com` / `password123` — ADMIN, negocio "Tienda Don Juan"
+
+## Reglas críticas (no negociables sin aprobación explícita)
+
+- **Multi-tenancy real**: aislamiento por `negocioId`. El `negocioId` SIEMPRE sale del JWT del usuario autenticado — nunca confiar en uno enviado por el cliente. Toda consulta a datos de negocio usa `findFirst({ id, negocioId })`. Verificado en los 7 servicios, sin fugas (ver `backend/SECURITY-BACKLOG.md`).
+- **Roles**: `ADMIN` y `VENDEDOR`, siempre en mayúsculas (el JWT los guarda así — ya hubo un bug por usar `'admin'` en minúscula en `@Roles()`, corregido).
+- **Prisma se mantiene en 6.19.3** salvo decisión explícita mía. No proponer cambios de schema o migraciones sin analizar primero el impacto.
+- **shadcn/ui usa Base UI**, no Radix: usar el patrón `render`, nunca asumir `asChild`.
+- No crear un endpoint nuevo si uno existente puede resolver la necesidad.
+- No introducir librerías o tecnologías nuevas sin necesidad real.
+- Seguridad: nunca recomendar desactivar auth, saltar autorización, quitar validaciones, exponer datos de otro negocio, o soluciones temporales que comprometan seguridad.
+
+## Metodología de trabajo
+
+```
+PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW → COMMIT → DOCUMENTACIÓN (si hay conocimiento durable)
+```
+
+- Cada tarea debe ser pequeña y con un objetivo concreto.
+- Antes de tocar código: inspeccionar los archivos reales del repo (no asumir su contenido), respetar `AGENTS.md` si existe.
+- No inventar APIs, componentes o estructuras sin verificarlas primero en el código.
+- Si hay una decisión arquitectónica no cubierta en este documento: detenerse y preguntar, no improvisar.
+- Cualquier backlog o lista de tareas de varios pasos (como una auditoría de seguridad con T1, T2, T3...) debe quedar escrito en un archivo del repo (ej. `backend/SECURITY-BACKLOG.md`) antes de darla por generada — una lista que solo vive en el historial de la sesión se pierde al cerrarla. Mantenerlo actualizado cuando se cierre un ítem.
+
+## Estado actual del sistema
+
+### Backend — completo y probado
+7 módulos: Auth, Categoria, Cliente, Proveedor, Producto, Venta, Deuda.
+
+- Transacciones atómicas: Producto+Inventario juntos; Venta+DetalleVenta+Deuda (si queda pendiente)+descuento de stock.
+- Regla de negocio: `precioVenta` es por KILOGRAMO si `unidadMedida = GRAMO`, por unidad si `UNIDAD` (la cantidad de venta viaja en gramos, se divide /1000 para el cálculo).
+- Auth: JWT vía cookie httpOnly + soporte Bearer paralelo. CORS restringido a `localhost:3001` + dominio de Vercel, `credentials: true`.
+- RolesGuard + `@Roles()` implementado con esta matriz (verificada en código, no solo documentada):
+  - Cliente: crear/listar/ver = cualquiera; editar/eliminar = solo ADMIN.
+  - Producto: listar/ver = cualquiera; crear/editar/eliminar = solo ADMIN.
+  - Proveedor, Categoria: todo el módulo solo ADMIN.
+  - Venta, Deuda: ADMIN y VENDEDOR (explícito desde commit `ebd2726` — antes era implícito vía JwtAuthGuard, mismo comportamiento real).
+- `PrismaExceptionFilter` global (`backend/src/common/prisma-exception.filter.ts`) traduce P2002/P2003/P2025 a mensajes en español.
+- **Rate limiting (T1) — CERRADO**: `@nestjs/throttler` en `login` y `registrarNegocio` (5/min por IP), `trust proxy` configurado para Railway, `ThrottlerExceptionFilter` registrado globalmente devolviendo 429 en español. Detalle completo en `backend/SECURITY-BACKLOG.md`.
+- **Paginación en proceso**: `backend/src/common/dto/paginacion.dto.ts` ya existe (pagina/limite, defaults 1/20). Ya se migró `listar()` de Cliente a devolver `{ data, total, pagina, totalPaginas }`. Falta replicar en Proveedor, Producto, Venta, Deuda (service.ts + controller.ts de cada uno).
+
+### Frontend — completo y probado
+- Landing animada en `/` (secuencia VELOCIDAD → SEGURIDAD → FACILIDAD, tipografía Space Grotesk, paleta blanco/negro puro `#FAFAFA`/`#0A0A0A`, sin color de acento).
+- Login (`/login`) y Registro (`/registrar`); registro ya loguea automáticamente tras crear el negocio.
+- Dashboard protegido (`frontend/src/app/dashboard/layout.tsx`, Server Component, verifica `GET /auth/perfil`, redirige a `/login` si no hay sesión).
+- `/dashboard` muestra el Resumen real directamente (FI-001, cerrado y commiteado desde el 1-4 de sept). `/dashboard/resumen` redirige a `/dashboard`.
+- Sidebar (`DashboardShell`) con navegación a los 5 módulos + logout.
+- 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
+- Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
+- **En curso — paginación en frontend**: ya migrado Clientes (`lib/clientes.ts`, componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` en la página). Falta replicar el mismo patrón en Proveedores, Productos, Ventas, Deudas.
+
+## Backlog de seguridad — ver `backend/SECURITY-BACKLOG.md`
+
+Resumen (detalle completo en ese archivo):
+- **T1 (rate limiting), matriz de roles, multi-tenancy, auth (bcrypt/JWT/cookies): verificados y cerrados.**
+- **Pendiente:** T2 — instalar `helmet` (headers de seguridad HTTP, no está instalado). T3 — crear `.env.example` (higiene, no es un riesgo real ya que `.env` está bien protegido).
+
+## Próximos pasos (orden acordado)
+
+1. ~~Página /registrar~~ ✅
+2. ~~Control de roles~~ ✅
+3. ~~Mensajes de error amigables~~ ✅
+4. ~~Rate limiting (T1)~~ ✅
+5. ~~Dashboard "Resumen" (FI-001)~~ ✅
+6. **Seguridad: helmet + .env.example (T2, T3)** — bajo esfuerzo, hacerlo antes de seguir escalando.
+7. **Paginación** — faltan 4 módulos en frontend, 4 en backend (ver arriba).
+8. PWA para instalar en móvil/PC.
+
+**Deploy (Vercel + Railway): pospuesto explícitamente.** No se retoma hasta cerrar los puntos 6 y 7. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
+
+Después de esta lista técnica: retoques visuales/animaciones más pulidos (pospuesto a propósito).
+
+## Notas para no repetir errores ya resueltos
+
+- Nombres de archivo SIEMPRE con punto (`cliente.service.ts`), nunca con guion.
+- Al pegar un archivo completo: `Ctrl+A` + Delete antes de pegar, nunca pegar encima de contenido viejo (causa imports duplicados) — esto causó una regresión real en `dashboard/resumen/page.tsx` que hubo que descartar con `git checkout HEAD`.
+- Los campos reales del JWT decodificado son `usuario.negocioId` y `usuario.userId` (interfaz `UsuarioAutenticado` en `backend/src/auth/usuario-actual.decorator.ts`), no `id`.
+- El backend debe encenderse ANTES que el frontend (si no, Next.js toma el puerto 3000 y el backend falla con `EADDRINUSE`).
+- Docker debe estar arriba (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError`.
+- Usar `.gitattributes` (ya existe) para forzar LF — evita diffs falsos masivos por CRLF de Windows (ya pasó una vez, ~93 archivos, se corrigió en `5d2eb0e`).
+- Antes de asumir que algo está "pendiente" o "sin commitear": correr `git log --oneline` y `git status` — varias veces se documentó como pendiente algo que ya estaba commiteado.
