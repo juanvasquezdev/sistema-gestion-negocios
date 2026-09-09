@@ -67,7 +67,7 @@ Se estaba actualizando cada página para consumir la nueva forma paginada del ba
 - Nombres de archivo: SIEMPRE con punto (`cliente.service.ts`), nunca guion — pasó varias veces al inicio.
 - Al pegar un archivo completo nuevo: SIEMPRE `Ctrl+A` + Delete antes de pegar, nunca pegar encima de contenido viejo (causó imports duplicados varias veces).
 - `usuario.negocioId` y `usuario.userId` son los nombres de campo reales en el JWT decodificado (interfaz `UsuarioAutenticado` en `backend/src/auth/usuario-actual.decorator.ts`), no `id`.
-- Backend SIEMPRE se enciende antes que frontend (si no, Next.js toma el puerto 3000 y el backend falla con EADDRINUSE al querer usar el mismo puerto).
+- Backend SIEMPRE se enciende antes que frontend (si no, Next.js toma el puerto 3000 y el backend falla con EADDRINUSE al querer usar el mismo puerto). **Mitigado:** `frontend/package.json` ahora fija `"dev": "next dev -p 3001"`, así el frontend ya no puede caer por accidente en el 3000 sin importar el orden de arranque.
 - Docker debe estar levantado (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError: Can't reach database server`.
 
 ---

@@ -96,6 +96,14 @@ Causa raíz encontrada: el repo no tenía `.gitattributes`, y `core.autocrlf=tru
 
 Corregido: `.gitattributes` en la raíz (`* text=auto eol=lf` + `binary` explícito para ico/imágenes/fuentes), `core.autocrlf=false` a nivel de repo (local, no global), y los 127 archivos de texto trackeados reescritos a LF real en disco. `git diff --shortstat` después del commit: vacío.
 
+## Bug de login "Credenciales incorrectas" — CERRADO (commit `48d9e53`)
+
+No era un problema de credenciales ni del backend: se verificó que el hash de `juan@test.com` seguía siendo válido para `password123` (`bcrypt.compare` → true) y que `auth.service.ts` no había cambiado. La causa real era un choque de puertos: `next dev` sin `-p` explícito cae en el puerto 3000 (el mismo del backend); si el frontend arranca primero o sin el flag, se queda con el 3000 y las peticiones a `NEXT_PUBLIC_API_URL=http://localhost:3000` terminan cayendo en el propio Next.js en vez del backend real — confirmado pidiendo `/auth/perfil` (ruta solo del backend) y viendo `X-Powered-By: Next.js` en la respuesta.
+
+Corregido: `frontend/package.json` ahora fija `"dev": "next dev -p 3001"`, así el puerto queda fijo sin importar el orden de arranque. Verificado en vivo end-to-end: login → cookie → `/dashboard` muestra el resumen real.
+
+De paso se encontraron y mataron procesos huérfanos de `nest start --watch` que habían quedado vivos de arranques anteriores en la sesión (competían por el puerto 3000 cada vez que se guardaba un archivo).
+
 ## Estado del Dashboard (FI-001 — CERRADO)
 
 `/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
