@@ -13,3 +13,6 @@ Thumbs.db
 frontend/node_modules
 frontend/.next
 frontend/.env*
+
+# Documentos de contexto/proceso (Cowork) - no se publican en GitHub
+docs/
