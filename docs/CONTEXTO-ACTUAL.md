@@ -104,6 +104,10 @@ Corregido: `frontend/package.json` ahora fija `"dev": "next dev -p 3001"`, así 
 
 De paso se encontraron y mataron procesos huérfanos de `nest start --watch` que habían quedado vivos de arranques anteriores en la sesión (competían por el puerto 3000 cada vez que se guardaba un archivo).
 
+## Warning de Framer Motion (AnimatePresence) — CERRADO (commit `55f05fc`)
+
+Los 3 estados del hero de la landing (`marca`, `auth` sin sesión, `auth` con sesión) dentro del `AnimatePresence mode="wait"` de `landing-hero.tsx` no definían la prop `exit`, causando el warning en consola "attempting to animate multiple children... mode is set to wait". Se agregó `exit` a juego con el `initial`/`animate` de cada uno. Cambio solo visual, sin tocar lógica de `paso`/`usuario`. Pasa `tsc`/`lint`; la desaparición del warning en consola del navegador queda pendiente de que Juan la confirme (Claude Code no tiene navegador real en este entorno).
+
 ## Estado del Dashboard (FI-001 — CERRADO)
 
 `/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
