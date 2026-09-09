@@ -2,11 +2,12 @@
 
 ## Prioridad ahora mismo
 
-1. **Decidir el nombre nuevo** — "Fast Inventory" ya existe como marca/producto de terceros, se descartó. Candidatos preseleccionados (sin choque directo encontrado en búsqueda web, no es una búsqueda formal de marca): **Bodegix, Tiendix, Kiosca, Bodeka**. Antes de adoptarlo: revisar dominio disponible y registro de marcas de la SIC (Colombia). Pendiente de decisión de Juan — no se ha renombrado nada en el repo todavía.
-2. Terminar paginación (faltan 4 módulos en frontend, 4 en backend).
-3. Deploy: **pospuesto**, no se retoma hasta cerrar el punto 2.
+1. **Decidir el nombre nuevo** — "Fast Inventory" ya existe como marca/producto de terceros, se descartó. Candidatos preseleccionados (sin choque directo encontrado en búsqueda web, no es una búsqueda formal de marca): **Bodegix, Tiendix, Kiosca, Bodeka**. Antes de adoptarlo: revisar dominio disponible y registro de marcas de la SIC (Colombia). Pendiente de decisión de Juan — no se ha renombrado nada en el repo todavía. Aparece hardcodeado en 9 archivos (landing, login, registro, `<title>`, docs) — mapeado, no se toca hasta la decisión.
+2. Seguir mejorando el sistema y usándolo en local (base y estructura) antes de retomar deploy — decisión explícita de Juan, no un bloqueo técnico.
 
-El backlog de seguridad completo (T0-T3), FI-001 y el housekeeping de git están **cerrados**.
+**Paginación: CERRADA en los 5 módulos** (backend y frontend) — verificado directamente en código el 2026-09-09, no en los commits de esta sesión sino de antes (`6012090`, `27673e5`). Los 3 documentos de `docs/` decían "pendiente"/"en curso" por error; ya se corrigió esa desactualización.
+
+El backlog de seguridad completo (T0-T3), FI-001, la paginación y el housekeeping de git están **cerrados**.
 
 ## Proyecto
 
@@ -116,11 +117,20 @@ Juan levanta backend y frontend en su propia terminal normalmente. Claude Code n
 
 `/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
 
+## Análisis de coherencia y hardening — CERRADO (commits `4de4a36`, `b59bd87`, `6a54740`)
+
+Revisión completa de código + los 3 docs para buscar bugs, deuda técnica e inconsistencias, aprobada por Juan el 2026-09-09:
+
+- **`bootstrap()` sin manejar en `main.ts`:** si el arranque falla (ej. DB caída), la promesa rechazada quedaba sin manejar. Corregido con `.catch()` que loguea y hace `process.exit(1)`. Verificado: backend sigue arrancando y respondiendo normal.
+- **`RespuestaPaginada<T>` duplicada:** estaba definida igual en `lib/clientes.ts` y `lib/proveedores.ts`, y 3 módulos sin relación con proveedores importaban de ahí. Consolidada en `frontend/src/lib/paginacion.ts`. Verificado en vivo: los 5 módulos paginados siguen cargando bien.
+- **Condición de carrera de stock:** documentada como backlog diferido en `backend/SECURITY-BACKLOG.md`, no arreglada todavía (riesgo bajo con la concurrencia actual).
+- Quedan igual sin tocar (ya documentado antes, bajo impacto): el error de tipo `Decimal` en `venta.service.ts` y los ~43 errores de formato Prettier del backend.
+
 ## Próximo paso
 
-1. Definir el nombre nuevo (Bodegix / Tiendix / Kiosca / Bodeka u otro) y aplicarlo donde corresponda (repo, docs, UI).
-2. Seguir con paginación (backend: Proveedor, Producto, Venta, Deuda; frontend: mismo patrón que Clientes).
-3. Solo después, retomar deploy.
+1. Definir el nombre nuevo (Bodegix / Tiendix / Kiosca / Bodeka u otro) y aplicarlo donde corresponda (repo, docs, UI) — cuando Juan decida.
+2. Mientras tanto: seguir usando y mejorando el sistema en local.
+3. Cuando la base y estructura estén sólidas a criterio de Juan, retomar el deploy.
 
 ## Nota para Claude Code
 

@@ -8,7 +8,7 @@
 - **Metodología:** un archivo a la vez, confirmación antes de avanzar, explicación de cada pieza de código, commits disciplinados.
 
 ## Backend — completo y probado
-6 módulos: Auth, Categoria, Cliente, Proveedor, Producto, Venta, Deuda.
+7 módulos: Auth, Categoria, Cliente, Proveedor, Producto, Venta, Deuda.
 - Multi-tenancy real: siempre `findFirst({ id, negocioId })`.
 - Transacciones: Producto+Inventario juntos; Venta+DetalleVenta+Deuda(si pendiente)+descuento de stock atómico.
 - Regla de negocio: `precioVenta` es por KILOGRAMO si `unidadMedida = GRAMO`, por unidad si `UNIDAD` (cantidad de venta viaja en gramos, se divide /1000 para el cálculo).
@@ -20,7 +20,7 @@
   - Venta, Deuda: sin restricción de rol
   - ⚠️ Bug ya corregido: `@Roles('admin')` en minúscula bloqueaba a ADMIN real (JWT usa `'ADMIN'` mayúscula). Revisado y corregido en los 4 controllers afectados.
 - **PrismaExceptionFilter global** (`backend/src/common/prisma-exception.filter.ts`, registrado en `main.ts` con `app.useGlobalFilters(...)`): traduce P2002 (duplicado), P2003 (relación bloqueante), P2025 (no encontrado) a mensajes en español.
-- **Paginación EN PROCESO:** se creó `backend/src/common/dto/paginacion.dto.ts` (pagina/limite con defaults 1/20). Se modificaron los 5 `service.ts` y `controller.ts` (Cliente, Proveedor, Producto, Venta, Deuda) para que `listar()` devuelva `{ data, total, pagina, totalPaginas }` en vez de array plano.
+- **Paginación CERRADA en los 5 módulos:** `backend/src/common/dto/paginacion.dto.ts` (pagina/limite con defaults 1/20). Los 5 `service.ts`/`controller.ts` (Cliente, Proveedor, Producto, Venta, Deuda) devuelven `{ data, total, pagina, totalPaginas }`.
 - **Endurecimiento de seguridad — CERRADO (T0-T3):** rate limiting con `@nestjs/throttler` en `login` y `registrarNegocio` (5 intentos/minuto por IP, `trust proxy` en `main.ts`), 429 con mensaje en español vía `ThrottlerExceptionFilter`, `helmet` y `.env.example` implementados. Detalle en `backend/SECURITY-BACKLOG.md`.
 
 ## Frontend — completo y probado
@@ -34,21 +34,15 @@
 - Patrón repetido en cada módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
 - **FI-001 CERRADO:** `/dashboard` muestra el Resumen real, `/dashboard/resumen` redirige. Commiteado desde inicios de septiembre (ver `CONTEXTO-ACTUAL.md`).
 
-## EN PROCESO AHORA MISMO — paginación del frontend
-Se estaba actualizando cada página para consumir la nueva forma paginada del backend. Ya se dio la plantilla completa para **Clientes**:
-1. `lib/clientes.ts`: `listarClientes(pagina, limite)` ahora devuelve `RespuestaPaginada<Cliente>` (interfaz `{ data, total, pagina, totalPaginas }`), llama a `/clientes?pagina=X&limite=Y`.
-2. Nuevo componente reutilizable `frontend/src/components/paginacion.tsx` (botones Anterior/Siguiente + números de página, estilo shadcn Button).
-3. `dashboard/clientes/page.tsx`: agregado estado `pagina`/`totalPaginas`, `useEffect` depende de `pagina`, se agregó `<Paginacion .../>` después de la tabla.
+## Paginación — CERRADA en los 5 módulos (frontend y backend)
+Cada módulo sigue el mismo patrón, usado primero en **Clientes** y replicado en Proveedores, Productos, Ventas y Deudas:
+1. `lib/[modulo].ts`: `listar[Modulo](pagina, limite)` devuelve `RespuestaPaginada<T>` (interfaz `{ data, total, pagina, totalPaginas }`), llama a `/[modulo]?pagina=X&limite=Y`.
+2. Componente reutilizable `frontend/src/components/paginacion.tsx` (botones Anterior/Siguiente + números de página, estilo shadcn Button).
+3. `dashboard/[modulo]/page.tsx`: estado `pagina`/`totalPaginas`, `useEffect` depende de `pagina`, `<Paginacion .../>` después de la tabla.
 
-**PENDIENTE INMEDIATO:** replicar exactamente el mismo patrón (los mismos 3 tipos de cambio) en:
-- `lib/proveedores.ts` + `dashboard/proveedores/page.tsx`
-- `lib/productos.ts` + `dashboard/productos/page.tsx`
-- `lib/ventas.ts` + `dashboard/ventas/page.tsx`
-- `lib/deudas.ts` + `dashboard/deudas/page.tsx`
+**2026-09-09:** se consolidó `RespuestaPaginada<T>` (estaba duplicada en `lib/clientes.ts` y `lib/proveedores.ts`) en un archivo neutral, `frontend/src/lib/paginacion.ts`, del que ahora importan los 5 módulos. Sin cambio de comportamiento, verificado en vivo.
 
-Último resultado confirmado: Clientes cargó bien tras el cambio (pendiente de que el usuario confirme captura final).
-
-**Orden de prioridad actual (actualizado):** 1) decidir el nombre nuevo, 2) terminar esta paginación, 3) deploy. PWA queda para después. Backlog de seguridad y FI-001 ya cerrados — ver `CONTEXTO-ACTUAL.md` y `contexto-sistema-negocios.md`.
+**Orden de prioridad actual:** 1) decidir el nombre nuevo, 2) mientras tanto, seguir mejorando y usando el sistema en local, 3) cuando la base esté sólida, retomar deploy. PWA queda para después. Backlog de seguridad, FI-001 y paginación ya cerrados — ver `CONTEXTO-ACTUAL.md` y `contexto-sistema-negocios.md`.
 
 ## Plan general pendiente (en orden acordado)
 1. ~~Página /registrar~~ ✅
@@ -56,10 +50,11 @@ Se estaba actualizando cada página para consumir la nueva forma paginada del ba
 3. ~~Mensajes de error amigables~~ ✅
 4. ~~Dashboard "Resumen" con indicadores reales (FI-001)~~ ✅
 5. ~~Backlog de seguridad (T0-T3)~~ ✅
-6. Decidir el nombre nuevo (pendiente de decisión de Juan, ver `CONTEXTO-ACTUAL.md`).
-7. **Paginación — EN PROCESO (falta replicar en 4 módulos restantes)**
-8. **Deploy — pospuesto explícitamente**, no se retoma hasta cerrar los puntos anteriores (Vercel ya conectado pero con build fallido histórico por asChild — ya corregido en código, falta reintentar deploy; backend necesita hosting tipo Railway/Render + DB en la nube tipo Supabase/Neon; hay que actualizar el `origin` de CORS en `main.ts` al dominio real)
-9. PWA para instalar en móvil/PC (recomendado sobre apps nativas separadas — reutiliza el mismo código)
+6. ~~Paginación en los 5 módulos~~ ✅
+7. Decidir el nombre nuevo (pendiente de decisión de Juan, ver `CONTEXTO-ACTUAL.md`).
+8. Seguir usando y mejorando el sistema en local — decisión explícita de Juan antes de retomar deploy.
+9. **Deploy — pospuesto explícitamente** hasta que Juan considere la base y estructura lo suficientemente sólidas (Vercel ya conectado pero con build fallido histórico por asChild — ya corregido en código, falta reintentar deploy; backend necesita hosting tipo Railway/Render + DB en la nube tipo Supabase/Neon; hay que actualizar el `origin` de CORS en `main.ts` al dominio real).
+10. PWA para instalar en móvil/PC (recomendado sobre apps nativas separadas — reutiliza el mismo código).
 
 ## Después de terminar la lista técnica
 - El usuario quiere retomar retoques visuales/animaciones en cada interfaz (más pulido, no solo funcional) — se pospuso a propósito hasta cerrar la lista técnica de arriba.
