@@ -90,6 +90,12 @@ Queda deliberadamente sin tocar (bajo impacto, no bloqueante):
 - `backend/src/venta/venta.service.ts` — 1 error de tipo en un template literal con `Decimal`.
 - ~43 errores de formato (Prettier) preexistentes en el backend — solo estilo, no lógica. **No correr `npm run lint` para "solo mirar" el estado:** cada vez que se corrió en esta sesión, el `--fix` reformateó automáticamente decenas de archivos por estos errores de Prettier. Se revirtió dos veces con `git checkout -- backend/src` antes de commitear nada. Si se quiere corregir el formato, hacerlo como una tarea propia y revisada, no como efecto secundario de revisar el lint.
 
+## Finales de línea (EOL) — CERRADO (commit `5d2eb0e`)
+
+Causa raíz encontrada: el repo no tenía `.gitattributes`, y `core.autocrlf=true` está fijado a nivel de sistema (no del repo). Sin `.gitattributes`, cualquier operación que reescribiera archivos en disco podía dejar el working tree en CRLF mientras el historial seguía en LF, y además dejar el índice de git con el stat-cache desactualizado — eso hacía que `git status` marcara decenas de archivos como modificados aunque `git diff` no mostrara ninguna diferencia real (se reprodujo exactamente: 93 archivos "M" con 0 cambios reales).
+
+Corregido: `.gitattributes` en la raíz (`* text=auto eol=lf` + `binary` explícito para ico/imágenes/fuentes), `core.autocrlf=false` a nivel de repo (local, no global), y los 127 archivos de texto trackeados reescritos a LF real en disco. `git diff --shortstat` después del commit: vacío.
+
 ## Estado del Dashboard (FI-001 — CERRADO)
 
 `/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
