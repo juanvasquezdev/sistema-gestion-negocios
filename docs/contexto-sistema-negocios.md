@@ -40,13 +40,13 @@ Razón de lo que sigue diferido: mantener el alcance de v1 acotado y enfocado en
 
 - **Backend:** completo y probado — 7 módulos (Auth, Categoria, Cliente, Proveedor, Producto, Venta, Deuda), multi-tenancy real (`negocioId` siempre desde el JWT, verificado sin fugas en los 7 servicios), roles `ADMIN`/`VENDEDOR` con matriz de autorización verificada en código, manejo de errores traducido al español.
 - **Frontend:** completo y probado — landing animada, login/registro, dashboard con los 5 módulos CRUD funcionando. `/dashboard` muestra el Resumen real con KPIs (FI-001, cerrado y commiteado desde inicios de septiembre).
-- **Endurecimiento de seguridad — auditoría verificada en código el 2026-09-09:** rate limiting (T1), matriz de roles, multi-tenancy y autenticación (bcrypt/JWT/cookies) confirmados cerrados y correctos. Quedan dos ítems menores de bajo esfuerzo: instalar `helmet` (headers de seguridad HTTP) y crear `.env.example`. Backlog completo documentado en `backend/SECURITY-BACKLOG.md` (vive en el repo, no solo en el chat, para que sobreviva entre sesiones).
+- **Endurecimiento de seguridad — CERRADO (T0-T3), verificado el 2026-09-09:** rate limiting (T1), matriz de roles, multi-tenancy, autenticación (bcrypt/JWT/cookies), `helmet` (T2) y `.env.example` (T3) confirmados cerrados y correctos, sin ítems pendientes. Backlog completo documentado en `backend/SECURITY-BACKLOG.md` (vive en el repo, no solo en el chat, para que sobreviva entre sesiones).
 - **En curso:** paginación — backend migrado en Cliente, falta replicar en Proveedor/Producto/Venta/Deuda; frontend igual, falta replicar el patrón ya usado en Clientes.
 
 El detalle técnico día a día vive en `CONTEXTO-ACTUAL.md` y `PROGRESO-fast-inventory.md` — esos son la fuente viva del estado del proyecto. Este documento es la base conceptual (propósito, modelo de datos, decisiones cerradas) y no se actualiza tarea por tarea.
 
 ## Próximos pasos (orden acordado)
-1. **Cerrar los dos ítems restantes de seguridad** (helmet + `.env.example`) — bajo esfuerzo, antes de seguir escalando.
+1. Decidir el nombre nuevo del producto (pendiente, ver `CONTEXTO-ACTUAL.md`).
 2. Paginación — terminar de replicar en los módulos restantes (backend y frontend).
 3. PWA para instalar en móvil/PC.
 
