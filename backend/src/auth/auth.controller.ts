@@ -9,6 +9,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegistrarNegocioDto } from './dto/registrar-negocio.dto';
 import { LoginDto } from './dto/login.dto';
@@ -20,6 +21,8 @@ import type { UsuarioAutenticado } from './usuario-actual.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('registrar-negocio')
   async registrarNegocio(
     @Body() dto: RegistrarNegocioDto,
@@ -37,6 +40,8 @@ export class AuthController {
     return resultado;
   }
 
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
