@@ -1,16 +1,16 @@
-# CONTEXTO ACTUAL — FAST INVENTORY
+# CONTEXTO ACTUAL — FAST INVENTORY (nombre en proceso de cambio, ver abajo)
 
 ## Prioridad ahora mismo
 
-1. Cerrar el resto del backlog de seguridad: T2 (helmet) y T3 (`.env.example`) — bajo esfuerzo, ver `backend/SECURITY-BACKLOG.md`.
+1. **Decidir el nombre nuevo** — "Fast Inventory" ya existe como marca/producto de terceros, se descartó. Candidatos preseleccionados (sin choque directo encontrado en búsqueda web, no es una búsqueda formal de marca): **Bodegix, Tiendix, Kiosca, Bodeka**. Antes de adoptarlo: revisar dominio disponible y registro de marcas de la SIC (Colombia). Pendiente de decisión de Juan — no se ha renombrado nada en el repo todavía.
 2. Terminar paginación (faltan 4 módulos en frontend, 4 en backend).
-3. Deploy: **pospuesto**, no se retoma hasta cerrar 1 y 2.
+3. Deploy: **pospuesto**, no se retoma hasta cerrar el punto 2.
 
-FI-001 y T1 (rate limiting) están **cerrados y verificados en código** — ver abajo.
+El backlog de seguridad completo (T0-T3), FI-001 y el housekeeping de git están **cerrados**.
 
 ## Proyecto
 
-Fast Inventory es un SaaS multi-tenant de gestión de negocios.
+SaaS multi-tenant de gestión de negocios (nombre en proceso de cambio, ver arriba).
 
 Monorepo:
 
@@ -37,7 +37,7 @@ Juan es el dueño del producto y toma las decisiones.
 
 Claude Code (en VS Code) es el agente de implementación — inspecciona y edita el código directamente. Ya no se usa Cursor.
 
-Claude (chat/Cowork) funciona como mentor técnico: análisis, planeación y documentación fuera del código. Mantiene los documentos de `docs/` sincronizados con el Proyecto de Claude, y tiene acceso directo de lectura/escritura al repo local vía conexión de carpeta.
+Claude (chat/Cowork) funciona como mentor técnico: análisis, planeación y documentación fuera del código. Tiene acceso directo de lectura/escritura al repo local (carpeta conectada) para mantener `docs/`, `CLAUDE.md` y el propio git sincronizados con este Proyecto — puede hacer commits de housekeeping (docs, config, limpieza) cuando Juan lo pide explícitamente, pero no implementa features ni toca lógica de negocio: eso es trabajo de Claude Code.
 
 ChatGPT actúa como supervisor técnico/arquitectónico cuando esté disponible.
 
@@ -62,27 +62,42 @@ No modificar archivos fuera del alcance aprobado.
 
 **Regla:** antes de dar algo por pendiente o sin commitear, correr `git log --oneline` y `git status` — ya pasó más de una vez que se documentó como pendiente algo que ya estaba commiteado.
 
-## Backlog de seguridad (auditoría) — detalle en `backend/SECURITY-BACKLOG.md`
+**Regla nueva:** `npm run lint` en `backend/` (y puede que en `frontend/`) incluye `--fix` — NO es de solo lectura, reescribe archivos. Antes de correrlo para "solo revisar" el estado, tenerlo en cuenta y revisar el diff resultante antes de commitear cualquier cosa (ya pasó: un chequeo de rutina reformateó 18 archivos sin aprobación; se revirtió con `git checkout` antes de commitear).
 
-**Cerrado y verificado en código (2026-09-09):**
-- T1 — Rate limiting en login/registro (`@nestjs/throttler`, 5/min por IP, filtro global con mensaje 429 en español, `trust proxy` configurado).
-- Matriz de roles/autorización en los 7 módulos — verificada consistente con lo documentado.
-- Multi-tenancy (`negocioId`) — verificado sin fugas en los 7 servicios.
-- Auth: bcrypt (12 rounds), JWT con secret desde `.env` sin fallback, cookie httpOnly+secure+sameSite correcto, `.env` no commiteado.
+## Backlog de seguridad — CERRADO (T0-T3)
 
-**Pendiente:**
-- T2 — instalar `helmet` (headers de seguridad HTTP, no está instalado hoy).
-- T3 — crear `.env.example` (higiene de onboarding, no es un riesgo real).
+Detalle completo en `backend/SECURITY-BACKLOG.md`. Resumen:
+- T0 (RolesGuard explícito en Venta/Deuda), T1 (rate limiting), matriz de roles, multi-tenancy y auth (bcrypt/JWT/cookies): verificados en código.
+- T2 (helmet) y T3 (`.env.example`): implementados y verificados por Claude Code (helmet probado con `curl` real, headers confirmados; login/CORS siguen funcionando). Commit `3888f73`.
+
+No queda backlog de seguridad pendiente.
+
+## Housekeeping de git — CERRADO
+
+Repo local limpio (`git status` sin cambios pendientes) después de:
+- `f998ddb` — eliminar archivos de Cursor (ya no se usa)
+- `f6a648e` — sincronizar `docs/` y `CLAUDE.md` con el estado real verificado
+- `1172f13` — agregar `backend/.claude/settings.json` y `frontend/AGENTS.md`/`CLAUDE.md` (generados por `next dev`, se commitean para que no aparezcan como cambio sin commitear en cada arranque)
+
+Nota técnica: hubo un `.git/index.lock` trabado que bloqueaba commits — se resolvió pidiendo permiso de borrado en la carpeta conectada. Si vuelve a pasar, mismo procedimiento.
+
+## Lint pendiente (no bloqueante, la app compila y corre)
+
+Identificado pero no corregido — pendiente de Claude Code, cambios mínimos, revisar diff antes de commitear (ver regla nueva arriba sobre `--fix`):
+
+- **Backend:** 4 errores de tipos `any` sin tipar (`jwt.strategy.ts`, `roles.guard.ts` x2) + 1 en `venta.service.ts` (template literal con `Decimal`), 1 warning de floating promise en `main.ts`.
+- **Frontend:** 4 usos de `any` en `lib/api.ts`; 3 warnings de React `setState` síncrono dentro de `useEffect` (`proveedores/page.tsx`, `ventas/page.tsx`, `use-mobile.ts`) + su warning de `exhaustive-deps` asociado.
 
 ## Estado del Dashboard (FI-001 — CERRADO)
 
-`/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. La landing pública sigue en `/`, sin tocar. Commiteado desde el 1-4 de septiembre (`c0e848b` y relacionados) — un intento de regresión posterior en el working tree fue detectado y descartado con `git checkout HEAD`, no llegó a commitearse.
+`/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
 
 ## Próximo paso
 
-1. Implementar T2 (helmet) y T3 (`.env.example`) — cambios pequeños y de bajo riesgo.
-2. Seguir con paginación (backend: Proveedor, Producto, Venta, Deuda; frontend: mismo patrón que Clientes).
-3. Solo después, retomar deploy.
+1. Definir el nombre nuevo (Bodegix / Tiendix / Kiosca / Bodeka u otro) y aplicarlo donde corresponda (repo, docs, UI).
+2. Opcional, bajo esfuerzo: que Claude Code corrija el lint pendiente (ver arriba).
+3. Seguir con paginación (backend: Proveedor, Producto, Venta, Deuda; frontend: mismo patrón que Clientes).
+4. Solo después, retomar deploy.
 
 ## Nota para Claude Code
 

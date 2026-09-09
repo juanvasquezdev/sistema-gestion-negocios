@@ -1,16 +1,18 @@
-# Fast Inventory — Contexto para Claude Code
+# Fast Inventory (nombre en proceso de cambio) — Contexto para Claude Code
 
 Este archivo se carga automáticamente en cada sesión de Claude Code dentro de este repo.
 No lo dupliques a mano en el prompt — Claude Code ya lo lee solo al abrir el proyecto.
+
+> **Nombre en transición:** "Fast Inventory" se va a reemplazar porque ya existe como marca/producto de terceros. Candidatos preseleccionados: Bodegix, Tiendix, Kiosca, Bodeka. Pendiente de decisión de Juan — no renombrar nada todavía sin confirmación explícita.
 
 ## Documentos de contexto
 
 Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios" (Cowork) — ábrelos si necesitas el porqué detrás de una decisión o el historial detallado, no solo las reglas de abajo:
 
 - @docs/contexto-sistema-negocios.md — propósito, modelo de datos y decisiones de diseño cerradas
-- @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, tarea activa y backlog de seguridad
+- @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, prioridad actual y lint pendiente
 - @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
-- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad verificada en código (fuente de verdad para el backlog de seguridad, no este archivo)
+- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T3, CERRADA), fuente de verdad para ese tema
 
 ## Rol de Claude en este proyecto
 
@@ -26,7 +28,7 @@ Actúa como mentor técnico senior + code reviewer exigente, no como generador d
 
 ## Proyecto
 
-Fast Inventory: SaaS multi-tenant de gestión para pequeños comercios (caso piloto: tienda de barrio).
+SaaS multi-tenant de gestión para pequeños comercios (caso piloto: tienda de barrio). Nombre comercial en proceso de cambio (ver arriba).
 Diseñado desde el día uno para escalar a multi-negocio / multi-ciudad.
 
 Monorepo:
@@ -57,7 +59,8 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - Antes de tocar código: inspeccionar los archivos reales del repo (no asumir su contenido), respetar `AGENTS.md` si existe.
 - No inventar APIs, componentes o estructuras sin verificarlas primero en el código.
 - Si hay una decisión arquitectónica no cubierta en este documento: detenerse y preguntar, no improvisar.
-- Cualquier backlog o lista de tareas de varios pasos (como una auditoría de seguridad con T1, T2, T3...) debe quedar escrito en un archivo del repo (ej. `backend/SECURITY-BACKLOG.md`) antes de darla por generada — una lista que solo vive en el historial de la sesión se pierde al cerrarla. Mantenerlo actualizado cuando se cierre un ítem.
+- Cualquier backlog o lista de tareas de varios pasos (como una auditoría de seguridad con T1, T2, T3...) debe quedar escrito en un archivo del repo (ej. `backend/SECURITY-BACKLOG.md`) antes de darla por generada. Mantenerlo actualizado cuando se cierre un ítem.
+- **`npm run lint` en `backend/` incluye `--fix`** — reescribe archivos, no es de solo lectura. Revisar el diff antes de commitear cualquier cosa después de correrlo.
 
 ## Estado actual del sistema
 
@@ -66,44 +69,41 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 
 - Transacciones atómicas: Producto+Inventario juntos; Venta+DetalleVenta+Deuda (si queda pendiente)+descuento de stock.
 - Regla de negocio: `precioVenta` es por KILOGRAMO si `unidadMedida = GRAMO`, por unidad si `UNIDAD` (la cantidad de venta viaja en gramos, se divide /1000 para el cálculo).
-- Auth: JWT vía cookie httpOnly + soporte Bearer paralelo. CORS restringido a `localhost:3001` + dominio de Vercel, `credentials: true`.
-- RolesGuard + `@Roles()` implementado con esta matriz (verificada en código, no solo documentada):
+- Auth: JWT vía cookie httpOnly + soporte Bearer paralelo. CORS restringido a `localhost:3001` + dominio de Vercel, `credentials: true`. `helmet` activo (headers de seguridad HTTP).
+- RolesGuard + `@Roles()` implementado con esta matriz (verificada en código):
   - Cliente: crear/listar/ver = cualquiera; editar/eliminar = solo ADMIN.
   - Producto: listar/ver = cualquiera; crear/editar/eliminar = solo ADMIN.
   - Proveedor, Categoria: todo el módulo solo ADMIN.
-  - Venta, Deuda: ADMIN y VENDEDOR (explícito desde commit `ebd2726` — antes era implícito vía JwtAuthGuard, mismo comportamiento real).
-- `PrismaExceptionFilter` global (`backend/src/common/prisma-exception.filter.ts`) traduce P2002/P2003/P2025 a mensajes en español.
-- **Rate limiting (T1) — CERRADO**: `@nestjs/throttler` en `login` y `registrarNegocio` (5/min por IP), `trust proxy` configurado para Railway, `ThrottlerExceptionFilter` registrado globalmente devolviendo 429 en español. Detalle completo en `backend/SECURITY-BACKLOG.md`.
+  - Venta, Deuda: ADMIN y VENDEDOR (explícito).
+- `PrismaExceptionFilter` global traduce P2002/P2003/P2025 a mensajes en español.
+- **Backlog de seguridad (T0-T3) — CERRADO.** Rate limiting, matriz de roles, multi-tenancy, auth, helmet y `.env.example` verificados. Detalle en `backend/SECURITY-BACKLOG.md`.
+- **Lint pendiente (no bloqueante):** 4 `any` sin tipar + 1 warning, ver `docs/CONTEXTO-ACTUAL.md`.
 - **Paginación en proceso**: `backend/src/common/dto/paginacion.dto.ts` ya existe (pagina/limite, defaults 1/20). Ya se migró `listar()` de Cliente a devolver `{ data, total, pagina, totalPaginas }`. Falta replicar en Proveedor, Producto, Venta, Deuda (service.ts + controller.ts de cada uno).
 
 ### Frontend — completo y probado
 - Landing animada en `/` (secuencia VELOCIDAD → SEGURIDAD → FACILIDAD, tipografía Space Grotesk, paleta blanco/negro puro `#FAFAFA`/`#0A0A0A`, sin color de acento).
 - Login (`/login`) y Registro (`/registrar`); registro ya loguea automáticamente tras crear el negocio.
 - Dashboard protegido (`frontend/src/app/dashboard/layout.tsx`, Server Component, verifica `GET /auth/perfil`, redirige a `/login` si no hay sesión).
-- `/dashboard` muestra el Resumen real directamente (FI-001, cerrado y commiteado desde el 1-4 de sept). `/dashboard/resumen` redirige a `/dashboard`.
+- `/dashboard` muestra el Resumen real directamente (FI-001, cerrado). `/dashboard/resumen` redirige a `/dashboard`.
 - Sidebar (`DashboardShell`) con navegación a los 5 módulos + logout.
 - 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
 - Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
+- **Lint pendiente (no bloqueante):** 4 `any` en `lib/api.ts` + 3 warnings de `setState` en `useEffect`, ver `docs/CONTEXTO-ACTUAL.md`.
 - **En curso — paginación en frontend**: ya migrado Clientes (`lib/clientes.ts`, componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` en la página). Falta replicar el mismo patrón en Proveedores, Productos, Ventas, Deudas.
-
-## Backlog de seguridad — ver `backend/SECURITY-BACKLOG.md`
-
-Resumen (detalle completo en ese archivo):
-- **T1 (rate limiting), matriz de roles, multi-tenancy, auth (bcrypt/JWT/cookies): verificados y cerrados.**
-- **Pendiente:** T2 — instalar `helmet` (headers de seguridad HTTP, no está instalado). T3 — crear `.env.example` (higiene, no es un riesgo real ya que `.env` está bien protegido).
 
 ## Próximos pasos (orden acordado)
 
 1. ~~Página /registrar~~ ✅
 2. ~~Control de roles~~ ✅
 3. ~~Mensajes de error amigables~~ ✅
-4. ~~Rate limiting (T1)~~ ✅
+4. ~~Backlog de seguridad (T0-T3)~~ ✅
 5. ~~Dashboard "Resumen" (FI-001)~~ ✅
-6. **Seguridad: helmet + .env.example (T2, T3)** — bajo esfuerzo, hacerlo antes de seguir escalando.
-7. **Paginación** — faltan 4 módulos en frontend, 4 en backend (ver arriba).
-8. PWA para instalar en móvil/PC.
+6. **Decidir y aplicar el nombre nuevo** (ver nota arriba) — pendiente de decisión de Juan.
+7. Opcional: cerrar el lint pendiente (bajo esfuerzo, no bloqueante).
+8. **Paginación** — faltan 4 módulos en frontend, 4 en backend (ver arriba).
+9. PWA para instalar en móvil/PC.
 
-**Deploy (Vercel + Railway): pospuesto explícitamente.** No se retoma hasta cerrar los puntos 6 y 7. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
+**Deploy (Vercel + Railway): pospuesto explícitamente.** No se retoma hasta cerrar el punto 8. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
 Después de esta lista técnica: retoques visuales/animaciones más pulidos (pospuesto a propósito).
 
@@ -116,3 +116,4 @@ Después de esta lista técnica: retoques visuales/animaciones más pulidos (pos
 - Docker debe estar arriba (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError`.
 - Usar `.gitattributes` (ya existe) para forzar LF — evita diffs falsos masivos por CRLF de Windows (ya pasó una vez, ~93 archivos, se corrigió en `5d2eb0e`).
 - Antes de asumir que algo está "pendiente" o "sin commitear": correr `git log --oneline` y `git status` — varias veces se documentó como pendiente algo que ya estaba commiteado.
+- `npm run lint` en `backend/` trae `--fix` — reescribe archivos aunque solo quieras revisar el estado. Revisar el diff antes de commitear.
