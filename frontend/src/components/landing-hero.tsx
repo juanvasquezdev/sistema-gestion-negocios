@@ -77,6 +77,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
             key="marca"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
             className="flex flex-col items-center text-center"
           >
@@ -117,6 +118,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
             key="auth"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
             transition={{ duration: 0.4 }}
             className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl p-8 flex flex-col gap-3"
           >
@@ -142,6 +144,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
             key="sesion"
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
             className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl p-8 flex flex-col gap-3"
           >
             <h2 className="font-[family-name:var(--font-display)] font-medium text-2xl text-[#0A0A0A]">
