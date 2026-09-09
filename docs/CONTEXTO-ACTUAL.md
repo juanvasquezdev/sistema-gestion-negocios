@@ -81,12 +81,14 @@ Repo local limpio (`git status` sin cambios pendientes) después de:
 
 Nota técnica: hubo un `.git/index.lock` trabado que bloqueaba commits — se resolvió pidiendo permiso de borrado en la carpeta conectada. Si vuelve a pasar, mismo procedimiento.
 
-## Lint pendiente (no bloqueante, la app compila y corre)
+## Lint — CERRADO lo relevante (commit `59f5ce4`)
 
-Identificado pero no corregido — pendiente de Claude Code, cambios mínimos, revisar diff antes de commitear (ver regla nueva arriba sobre `--fix`):
+Claude Code corrigió los `any` sin tipar y los `setState` síncronos en `useEffect` (2 archivos backend, 7 frontend), sin cambiar comportamiento (verificado en vivo: login, acceso ADMIN, bloqueo 401 sin token; `tsc --noEmit` limpio). Detalle completo en el mensaje del commit.
 
-- **Backend:** 4 errores de tipos `any` sin tipar (`jwt.strategy.ts`, `roles.guard.ts` x2) + 1 en `venta.service.ts` (template literal con `Decimal`), 1 warning de floating promise en `main.ts`.
-- **Frontend:** 4 usos de `any` en `lib/api.ts`; 3 warnings de React `setState` síncrono dentro de `useEffect` (`proveedores/page.tsx`, `ventas/page.tsx`, `use-mobile.ts`) + su warning de `exhaustive-deps` asociado.
+Queda deliberadamente sin tocar (bajo impacto, no bloqueante):
+- `backend/src/main.ts` — 1 warning de floating-promise.
+- `backend/src/venta/venta.service.ts` — 1 error de tipo en un template literal con `Decimal`.
+- ~43 errores de formato (Prettier) preexistentes en el backend — solo estilo, no lógica. **No correr `npm run lint` para "solo mirar" el estado:** cada vez que se corrió en esta sesión, el `--fix` reformateó automáticamente decenas de archivos por estos errores de Prettier. Se revirtió dos veces con `git checkout -- backend/src` antes de commitear nada. Si se quiere corregir el formato, hacerlo como una tarea propia y revisada, no como efecto secundario de revisar el lint.
 
 ## Estado del Dashboard (FI-001 — CERRADO)
 
@@ -95,9 +97,8 @@ Identificado pero no corregido — pendiente de Claude Code, cambios mínimos, r
 ## Próximo paso
 
 1. Definir el nombre nuevo (Bodegix / Tiendix / Kiosca / Bodeka u otro) y aplicarlo donde corresponda (repo, docs, UI).
-2. Opcional, bajo esfuerzo: que Claude Code corrija el lint pendiente (ver arriba).
-3. Seguir con paginación (backend: Proveedor, Producto, Venta, Deuda; frontend: mismo patrón que Clientes).
-4. Solo después, retomar deploy.
+2. Seguir con paginación (backend: Proveedor, Producto, Venta, Deuda; frontend: mismo patrón que Clientes).
+3. Solo después, retomar deploy.
 
 ## Nota para Claude Code
 

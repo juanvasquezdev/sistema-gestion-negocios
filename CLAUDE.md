@@ -77,7 +77,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
   - Venta, Deuda: ADMIN y VENDEDOR (explícito).
 - `PrismaExceptionFilter` global traduce P2002/P2003/P2025 a mensajes en español.
 - **Backlog de seguridad (T0-T3) — CERRADO.** Rate limiting, matriz de roles, multi-tenancy, auth, helmet y `.env.example` verificados. Detalle en `backend/SECURITY-BACKLOG.md`.
-- **Lint pendiente (no bloqueante):** 4 `any` sin tipar + 1 warning, ver `docs/CONTEXTO-ACTUAL.md`.
+- **Lint:** relevante ya corregido (commit `59f5ce4`); queda solo Prettier/estilo preexistente y 2 items menores sin tocar a propósito, ver `docs/CONTEXTO-ACTUAL.md`.
 - **Paginación en proceso**: `backend/src/common/dto/paginacion.dto.ts` ya existe (pagina/limite, defaults 1/20). Ya se migró `listar()` de Cliente a devolver `{ data, total, pagina, totalPaginas }`. Falta replicar en Proveedor, Producto, Venta, Deuda (service.ts + controller.ts de cada uno).
 
 ### Frontend — completo y probado
@@ -88,7 +88,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - Sidebar (`DashboardShell`) con navegación a los 5 módulos + logout.
 - 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
 - Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
-- **Lint pendiente (no bloqueante):** 4 `any` en `lib/api.ts` + 3 warnings de `setState` en `useEffect`, ver `docs/CONTEXTO-ACTUAL.md`.
+- **Lint:** relevante ya corregido (commit `59f5ce4`), ver `docs/CONTEXTO-ACTUAL.md`.
 - **En curso — paginación en frontend**: ya migrado Clientes (`lib/clientes.ts`, componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` en la página). Falta replicar el mismo patrón en Proveedores, Productos, Ventas, Deudas.
 
 ## Próximos pasos (orden acordado)
@@ -99,7 +99,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 4. ~~Backlog de seguridad (T0-T3)~~ ✅
 5. ~~Dashboard "Resumen" (FI-001)~~ ✅
 6. **Decidir y aplicar el nombre nuevo** (ver nota arriba) — pendiente de decisión de Juan.
-7. Opcional: cerrar el lint pendiente (bajo esfuerzo, no bloqueante).
+7. ~~Lint pendiente~~ ✅
 8. **Paginación** — faltan 4 módulos en frontend, 4 en backend (ver arriba).
 9. PWA para instalar en móvil/PC.
 
@@ -116,4 +116,4 @@ Después de esta lista técnica: retoques visuales/animaciones más pulidos (pos
 - Docker debe estar arriba (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError`.
 - Usar `.gitattributes` (ya existe) para forzar LF — evita diffs falsos masivos por CRLF de Windows (ya pasó una vez, ~93 archivos, se corrigió en `5d2eb0e`).
 - Antes de asumir que algo está "pendiente" o "sin commitear": correr `git log --oneline` y `git status` — varias veces se documentó como pendiente algo que ya estaba commiteado.
-- `npm run lint` en `backend/` trae `--fix` — reescribe archivos aunque solo quieras revisar el estado. Revisar el diff antes de commitear.
+- `npm run lint` en `backend/` trae `--fix` — reescribe archivos aunque solo quieras revisar el estado (pasó dos veces, ~43 errores de Prettier preexistentes se auto-formatean). Revisar el diff y revertir si no era la intención, antes de commitear cualquier otra cosa.
