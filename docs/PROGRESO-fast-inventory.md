@@ -69,6 +69,7 @@ Se estaba actualizando cada página para consumir la nueva forma paginada del ba
 - `usuario.negocioId` y `usuario.userId` son los nombres de campo reales en el JWT decodificado (interfaz `UsuarioAutenticado` en `backend/src/auth/usuario-actual.decorator.ts`), no `id`.
 - Backend SIEMPRE se enciende antes que frontend (si no, Next.js toma el puerto 3000 y el backend falla con EADDRINUSE al querer usar el mismo puerto). **Mitigado:** `frontend/package.json` ahora fija `"dev": "next dev -p 3001"`, así el frontend ya no puede caer por accidente en el 3000 sin importar el orden de arranque.
 - Docker debe estar levantado (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError: Can't reach database server`.
+- Claude Code no debe levantar `npm run start:dev`/`npm run dev` en segundo plano de forma casual: Juan corre sus propios servidores, Claude Code solo toma control temporalmente (avisando antes y después) cuando necesita probar un cambio.
 
 ---
 *Sincronizado desde el Proyecto de Claude "Sistema de Negocios". Este archivo lo mantiene principalmente Claude (Cowork); el estado técnico minuto a minuto vive en `CONTEXTO-ACTUAL.md`.*

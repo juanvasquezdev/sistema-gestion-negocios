@@ -108,6 +108,10 @@ De paso se encontraron y mataron procesos huérfanos de `nest start --watch` que
 
 Los 3 estados del hero de la landing (`marca`, `auth` sin sesión, `auth` con sesión) dentro del `AnimatePresence mode="wait"` de `landing-hero.tsx` no definían la prop `exit`, causando el warning en consola "attempting to animate multiple children... mode is set to wait". Se agregó `exit` a juego con el `initial`/`animate` de cada uno. Cambio solo visual, sin tocar lógica de `paso`/`usuario`. Pasa `tsc`/`lint`; la desaparición del warning en consola del navegador queda pendiente de que Juan la confirme (Claude Code no tiene navegador real en este entorno).
 
+## Convención nueva: quién levanta los servidores de desarrollo
+
+Juan levanta backend y frontend en su propia terminal normalmente. Claude Code no debe levantarlos de forma casual — solo cuando necesita probar un cambio real, y en ese caso: avisa antes de tomar el control, detiene lo que Juan tenga corriendo, levanta su propia instancia, hace la verificación, la apaga, y avisa para que Juan vuelva a levantar la suya y pruebe en localhost. Surgió porque, a lo largo de esta sesión, Claude Code dejó varias veces procesos `nest --watch`/`next dev` corriendo en segundo plano sin cerrarlos del todo, y eso fue la causa de más de un `EADDRINUSE`.
+
 ## Estado del Dashboard (FI-001 — CERRADO)
 
 `/dashboard` muestra el Resumen real directamente (KPIs, gráfico de 7 días, deudas, stock bajo). `/dashboard/resumen` redirige a `/dashboard`. Commiteado desde inicios de septiembre.
