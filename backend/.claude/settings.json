@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(npx prisma migrate *)",
+      "Bash(npx prisma db push *)",
+      "Bash(git push *)",
+      "Bash(git reset --hard *)"
+    ]
+  }
+}
