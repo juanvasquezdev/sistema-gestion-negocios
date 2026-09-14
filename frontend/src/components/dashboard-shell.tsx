@@ -40,7 +40,14 @@ const navegacion = [
 interface Usuario {
   email: string;
   rol: string;
+  nombre: string;
+  negocioNombre: string;
 }
+
+const ETIQUETA_ROL: Record<string, string> = {
+  ADMIN: 'Admin',
+  VENDEDOR: 'Vendedor',
+};
 
 export function DashboardShell({
   usuario,
@@ -61,9 +68,19 @@ export function DashboardShell({
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader className="p-4">
-          <h2 className="font-semibold text-lg">Mi Negocio</h2>
-          <p className="text-sm text-muted-foreground">{usuario.email}</p>
+        <SidebarHeader className="gap-3 px-4 pt-5 pb-4">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-tight tracking-tight text-[#0A0A0A] break-words">
+            {usuario.negocioNombre}
+          </h2>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="truncate text-sm font-medium">{usuario.nombre}</span>
+              <span className="shrink-0 rounded-full border border-[#0A0A0A] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[#0A0A0A]">
+                {ETIQUETA_ROL[usuario.rol] ?? usuario.rol}
+              </span>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">{usuario.email}</p>
+          </div>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
@@ -72,8 +89,11 @@ export function DashboardShell({
               <SidebarMenu>
                 {navegacion.map((item) => (
                   <SidebarMenuItem key={item.href}>
+                    {/* Activo: fondo negro / texto blanco (como la tarjeta activa del Resumen).
+                        transition-[...] conserva la transición de tamaño del componente y agrega la de colores. */}
                     <SidebarMenuButton
                       isActive={pathname === item.href}
+                      className="transition-[color,background-color,width,height,padding] duration-200 hover:bg-neutral-200/70 data-active:bg-[#0A0A0A] data-active:text-[#FAFAFA] data-active:hover:bg-[#0A0A0A] data-active:hover:text-[#FAFAFA]"
                       render={
                         <Link href={item.href}>
                           <item.icon />
@@ -87,9 +107,9 @@ export function DashboardShell({
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter className="p-4">
-          <Button variant="outline" onClick={handleLogout} className="w-full">
-            <LogOut className="mr-2 h-4 w-4" />
+        <SidebarFooter className="border-t px-4 pt-4 pb-5">
+          <Button variant="outline" onClick={handleLogout} className="h-9 w-full justify-center gap-2">
+            <LogOut className="h-4 w-4" />
             Cerrar sesión
           </Button>
         </SidebarFooter>

@@ -16,8 +16,19 @@ export function login(email: string, password: string) {
   return api.post<LoginResponse>('/auth/login', { email, password });
 }
 
+// Respuesta de GET /auth/perfil: los datos del JWT (ojo: `userId`, no `id` como en login)
+// más los nombres consultados en la DB.
+export interface PerfilUsuario {
+  userId: string;
+  negocioId: string;
+  email: string;
+  rol: string;
+  nombre: string;
+  negocioNombre: string;
+}
+
 export function obtenerPerfil() {
-  return api.get<Usuario>('/auth/perfil');
+  return api.get<PerfilUsuario>('/auth/perfil');
 }
 export interface RegistrarNegocioInput {
   nombreNegocio: string;

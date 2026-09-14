@@ -8,6 +8,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegistrarNegocioDto } from './dto/registrar-negocio.dto';
 import { LoginDto } from './dto/login.dto';
+import type { UsuarioAutenticado } from './usuario-actual.decorator';
 
 const SALT_ROUNDS = 12;
 
@@ -90,6 +91,30 @@ export class AuthService {
       usuario.email,
       usuario.rol.nombre,
     );
+  }
+
+  // Perfil del usuario autenticado. userId y negocioId salen del JWT (nunca del cliente).
+  // Consulta la DB para traer los nombres y para bloquear usuarios desactivados
+  // aunque su token todavía no haya vencido.
+  async perfil(usuario: UsuarioAutenticado) {
+    const encontrado = await this.prisma.usuario.findFirst({
+      where: { id: usuario.userId, negocioId: usuario.negocioId },
+      select: {
+        nombre: true,
+        activo: true,
+        negocio: { select: { nombre: true } },
+      },
+    });
+
+    if (!encontrado || !encontrado.activo) {
+      throw new UnauthorizedException('Sesión inválida.');
+    }
+
+    return {
+      ...usuario,
+      nombre: encontrado.nombre,
+      negocioNombre: encontrado.negocio.nombre,
+    };
   }
 
   private async generarRespuestaAuth(

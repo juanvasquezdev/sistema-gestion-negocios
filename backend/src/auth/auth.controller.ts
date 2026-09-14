@@ -74,6 +74,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('perfil')
   perfil(@UsuarioActual() usuario: UsuarioAutenticado) {
-    return usuario;
+    return this.authService.perfil(usuario);
   }
 }
