@@ -5,6 +5,8 @@ No lo dupliques a mano en el prompt — Claude Code ya lo lee solo al abrir el p
 
 > **Nombre en transición:** "Fast Inventory" se va a reemplazar porque ya existe como marca/producto de terceros. Candidatos preseleccionados: Bodegix, Tiendix, Kiosca, Bodeka. Pendiente de decisión de Juan — no renombrar nada todavía sin confirmación explícita.
 
+> **Nota (14 sept 2026, Claude/Cowork):** este archivo tenía la paginación marcada como "en proceso"/"faltan 4 módulos", pero `docs/CONTEXTO-ACTUAL.md` y `docs/PROGRESO-fast-inventory.md` ya la habían corregido a CERRADA desde el 9 sept (no se había sincronizado a este archivo). Corregido abajo — verificado de nuevo leyendo el código real.
+
 ## Documentos de contexto
 
 Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios" (Cowork) — ábrelos si necesitas el porqué detrás de una decisión o el historial detallado, no solo las reglas de abajo:
@@ -78,7 +80,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - `PrismaExceptionFilter` global traduce P2002/P2003/P2025 a mensajes en español.
 - **Backlog de seguridad (T0-T3) — CERRADO.** Rate limiting, matriz de roles, multi-tenancy, auth, helmet y `.env.example` verificados. Detalle en `backend/SECURITY-BACKLOG.md`.
 - **Lint:** relevante ya corregido (commit `59f5ce4`); queda solo Prettier/estilo preexistente y 2 items menores sin tocar a propósito, ver `docs/CONTEXTO-ACTUAL.md`.
-- **Paginación en proceso**: `backend/src/common/dto/paginacion.dto.ts` ya existe (pagina/limite, defaults 1/20). Ya se migró `listar()` de Cliente a devolver `{ data, total, pagina, totalPaginas }`. Falta replicar en Proveedor, Producto, Venta, Deuda (service.ts + controller.ts de cada uno).
+- **Paginación — CERRADA en los 5 módulos** (Cliente, Proveedor, Producto, Venta, Deuda): `backend/src/common/dto/paginacion.dto.ts` (pagina/limite, defaults 1/20), `listar()` devuelve `{ data, total, pagina, totalPaginas }` en los 5 services, controller recibe `@Query() paginacion: PaginacionDto`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
 ### Frontend — completo y probado
 - Landing animada en `/` (secuencia VELOCIDAD → SEGURIDAD → FACILIDAD, tipografía Space Grotesk, paleta blanco/negro puro `#FAFAFA`/`#0A0A0A`, sin color de acento).
@@ -89,7 +91,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
 - Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
 - **Lint:** relevante ya corregido (commit `59f5ce4`), ver `docs/CONTEXTO-ACTUAL.md`.
-- **En curso — paginación en frontend**: ya migrado Clientes (`lib/clientes.ts`, componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` en la página). Falta replicar el mismo patrón en Proveedores, Productos, Ventas, Deudas.
+- **Paginación — CERRADA en los 5 módulos**: `lib/[modulo].ts` tipado con `RespuestaPaginada<T>` (consolidada en `frontend/src/lib/paginacion.ts`), componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` + `<Paginacion />` en cada `dashboard/[modulo]/page.tsx`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
 ## Próximos pasos (orden acordado)
 
@@ -98,12 +100,13 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 3. ~~Mensajes de error amigables~~ ✅
 4. ~~Backlog de seguridad (T0-T3)~~ ✅
 5. ~~Dashboard "Resumen" (FI-001)~~ ✅
-6. **Decidir y aplicar el nombre nuevo** (ver nota arriba) — pendiente de decisión de Juan.
-7. ~~Lint pendiente~~ ✅
-8. **Paginación** — faltan 4 módulos en frontend, 4 en backend (ver arriba).
-9. PWA para instalar en móvil/PC.
+6. ~~Lint pendiente~~ ✅
+7. ~~Paginación en los 5 módulos~~ ✅ — verificado en código, ver `docs/CONTEXTO-ACTUAL.md` (commits `6012090`, `27673e5`).
+8. **Decidir y aplicar el nombre nuevo** (ver nota arriba) — pendiente de decisión de Juan.
+9. Seguir usando y mejorando el sistema en local — decisión explícita de Juan, no un bloqueo técnico.
+10. PWA para instalar en móvil/PC.
 
-**Deploy (Vercel + Railway): pospuesto explícitamente.** No se retoma hasta cerrar el punto 8. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
+**Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
 Después de esta lista técnica: retoques visuales/animaciones más pulidos (pospuesto a propósito).
 
