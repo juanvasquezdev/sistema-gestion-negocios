@@ -15,6 +15,27 @@ Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios
 - @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, prioridad actual y lint pendiente
 - @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
 - `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T3, CERRADA), fuente de verdad para ese tema
+- `docs/design-system.md` — tokens visuales, qué es Magic UI vs shadcn/Base UI, y patrones ya existentes que no hay que reinventar
+
+## Agentes especializados (subagentes de Claude Code)
+
+Este repo define 4 subagentes en `.claude/agents/` (Claude Code los detecta solo, no hay que "instalarlos" con ningún comando):
+
+- **`code-reviewer`** — revisión de seguridad/multi-tenancy/correctitud antes de dar algo por cerrado.
+- **`architect`** — decisiones de arquitectura, evaluar si de verdad hace falta algo nuevo antes de agregarlo.
+- **`ui-ux-designer`** — trabajo visual: aplica Magic UI + Framer Motion siguiendo `docs/design-system.md`, respeta el preset Base UI.
+- **`seo-optimizer`** — SEO de las páginas públicas (`/`, `/login`, `/registrar`); no toca el dashboard autenticado.
+
+Invocarlos es usar el mecanismo de subagentes de Claude Code con ese nombre quien corresponda según la tarea, no correr un comando de instalación aparte.
+
+## Decisiones de librerías aprobadas — visual y PWA (14 sept 2026)
+
+Juan aprobó explícitamente estas dos, no hace falta volver a preguntar:
+
+- **PWA:** `Serwist` (`@serwist/next` + `serwist`) — gratis, MIT, mantenido activamente para Next App Router. Se prefirió sobre `next-pwa` (mantenimiento más lento) y sobre escribirlo a mano.
+- **Visual/UI:** `Magic UI` (magicui.design) — componentes gratis y open source (MIT) que se copian al repo, hechos con Tailwind + Motion. Se prefirió sobre Aceternity UI (su capa gratis es más chica; lo bueno está en un plan de pago que no se necesita acá). Uso: SOLO para efectos decorativos/animación, nunca para reemplazar un componente shadcn/Base UI que ya funciona — ver `docs/design-system.md`.
+
+No introducir ninguna otra librería de UI/PWA sin que Juan lo apruebe de nuevo.
 
 ## Rol de Claude en este proyecto
 
