@@ -3,7 +3,7 @@
 Este archivo se carga automáticamente en cada sesión de Claude Code dentro de este repo.
 No lo dupliques a mano en el prompt — Claude Code ya lo lee solo al abrir el proyecto.
 
-> **Nombre en transición:** "Fast Inventory" se va a reemplazar porque ya existe como marca/producto de terceros. Candidatos preseleccionados: Bodegix, Tiendix, Kiosca, Bodeka. Pendiente de decisión de Juan — no renombrar nada todavía sin confirmación explícita.
+> **Nombre en transición:** "Fast Inventory" se va a reemplazar porque ya existe como marca/producto de terceros. Nombre provisional elegido: **Nudo** (14 sept 2026) — se descartaron Bodegix/Tiendix/Kiosca/Bodeka (genéricos) y también "Auge" (ya lo usa un competidor directo: app "Auge - Inventario y ventas" en LatAm). Falta verificar dominio disponible y registro de marca en la SIC (Colombia) antes de aplicarlo — no renombrar nada en el repo todavía sin confirmación explícita.
 
 > **Nota (14 sept 2026, Claude/Cowork):** este archivo tenía la paginación marcada como "en proceso"/"faltan 4 módulos", pero `docs/CONTEXTO-ACTUAL.md` y `docs/PROGRESO-fast-inventory.md` ya la habían corregido a CERRADA desde el 9 sept (no se había sincronizado a este archivo). Corregido abajo — verificado de nuevo leyendo el código real.
 
