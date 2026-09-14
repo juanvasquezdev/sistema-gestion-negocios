@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { ResumenResponse, obtenerResumen } from '@/lib/resumen';
+import { NumberTicker } from '@/components/magicui/number-ticker';
 import {
   Table,
   TableBody,
@@ -35,9 +36,24 @@ function formatoFecha(iso: string) {
   return new Date(iso).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+// KPI animado (Magic UI Number Ticker). text-inherit: respeta el color de la tarjeta activa (fondo negro).
+// Los montos son Decimal(12,2): solo se muestran centavos si el valor los tiene.
+function KpiAnimado({ valor, moneda }: { valor: number; moneda?: boolean }) {
+  return (
+    <>
+      {moneda && '$'}
+      <NumberTicker
+        value={valor}
+        decimalPlaces={Number.isInteger(valor) ? 0 : 2}
+        className="text-inherit dark:text-inherit tracking-normal"
+      />
+    </>
+  );
+}
+
 interface TarjetaProps {
   titulo: string;
-  valor: string;
+  valor: ReactNode;
   detalle?: string;
   activa?: boolean;
   onClick?: () => void;
@@ -98,26 +114,26 @@ export default function ResumenPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Tarjeta
               titulo="Ventas de hoy"
-              valor={formatoMoneda(datos.ventasHoy.monto)}
+              valor={<KpiAnimado valor={datos.ventasHoy.monto} moneda />}
               detalle={`${datos.ventasHoy.cantidad} venta(s)`}
               onClick={() => router.push('/dashboard/ventas')}
             />
             <Tarjeta
               titulo="Ventas del mes"
-              valor={formatoMoneda(datos.ventasMes.monto)}
+              valor={<KpiAnimado valor={datos.ventasMes.monto} moneda />}
               detalle={`${datos.ventasMes.cantidad} venta(s)`}
               onClick={() => router.push('/dashboard/ventas')}
             />
             <Tarjeta
               titulo="Por cobrar"
-              valor={formatoMoneda(datos.totalPorCobrar)}
+              valor={<KpiAnimado valor={datos.totalPorCobrar} moneda />}
               detalle={`${datos.deudasPendientes.length} cliente(s)`}
               activa={tab === 'cobrar'}
               onClick={() => setTab(tab === 'cobrar' ? 'general' : 'cobrar')}
             />
             <Tarjeta
               titulo="Stock bajo"
-              valor={String(datos.productosStockBajo.length)}
+              valor={<KpiAnimado valor={datos.productosStockBajo.length} />}
               detalle="producto(s) por reabastecer"
               activa={tab === 'stock'}
               onClick={() => setTab(tab === 'stock' ? 'general' : 'stock')}
@@ -127,12 +143,12 @@ export default function ResumenPage() {
           <div className="grid grid-cols-2 gap-4">
             <Tarjeta
               titulo="Clientes"
-              valor={String(datos.totalClientes)}
+              valor={<KpiAnimado valor={datos.totalClientes} />}
               onClick={() => router.push('/dashboard/clientes')}
             />
             <Tarjeta
               titulo="Productos activos"
-              valor={String(datos.totalProductosActivos)}
+              valor={<KpiAnimado valor={datos.totalProductosActivos} />}
               onClick={() => router.push('/dashboard/productos')}
             />
           </div>
