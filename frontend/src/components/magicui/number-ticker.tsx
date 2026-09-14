@@ -1,11 +1,12 @@
 // Magic UI — Number Ticker (https://magicui.design/r/number-ticker.json)
 // Copiado del registro sin la CLI: la CLI lo escribe en components/ui e instala `motion`.
 // Cambios respecto del original: import desde `framer-motion` (ya instalado) en vez de
-// `motion/react`, y formato `es-CO` en vez de `en-US`. Ver docs/design-system.md.
+// `motion/react`, formato `es-CO` en vez de `en-US`, y con reduced motion muestra el valor final
+// sin animar (useReducedMotion). Ver docs/design-system.md.
 "use client"
 
 import { useEffect, useRef, type ComponentPropsWithoutRef } from "react"
-import { useInView, useMotionValue, useSpring } from "framer-motion"
+import { useInView, useMotionValue, useReducedMotion, useSpring } from "framer-motion"
 
 import { cn } from "@/lib/utils"
 
@@ -33,8 +34,20 @@ export function NumberTicker({
     stiffness: 100,
   })
   const isInView = useInView(ref, { once: true, margin: "0px" })
+  const reducirMovimiento = useReducedMotion()
 
   useEffect(() => {
+    // Reduced motion: se escribe el valor final directo, sin resorte ni retraso.
+    if (reducirMovimiento) {
+      if (ref.current) {
+        ref.current.textContent = Intl.NumberFormat("es-CO", {
+          minimumFractionDigits: decimalPlaces,
+          maximumFractionDigits: decimalPlaces,
+        }).format(Number((direction === "down" ? startValue : value).toFixed(decimalPlaces)))
+      }
+      return
+    }
+
     let timer: ReturnType<typeof setTimeout> | null = null
 
     if (isInView) {
@@ -48,7 +61,7 @@ export function NumberTicker({
         clearTimeout(timer)
       }
     }
-  }, [motionValue, isInView, delay, value, direction, startValue])
+  }, [motionValue, isInView, delay, value, direction, startValue, reducirMovimiento, decimalPlaces])
 
   useEffect(
     () =>
