@@ -13,6 +13,7 @@ import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -164,7 +165,41 @@ export default function ClientesPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {cargando ? (
-        <p className="text-sm text-muted-foreground">Cargando clientes...</p>
+        // Estado de carga: la misma tabla (encabezados reales) con 5 filas Skeleton. Son un término medio:
+        // con listas cortas la tabla se encoge un poco al llegar los datos, y con páginas llenas crece.
+        <Table aria-busy="true">
+          <caption className="sr-only">Cargando clientes...</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nombre</TableHead>
+              <TableHead>Documento</TableHead>
+              <TableHead>Teléfono</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }, (_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-4 w-40" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-24" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-28" />
+                </TableCell>
+                <TableCell>
+                  {/* size-8 = Button size="icon" (Editar/Eliminar) */}
+                  <div className="flex justify-end gap-1">
+                    <Skeleton className="size-8" />
+                    <Skeleton className="size-8" />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : clientes.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Aún no tienes clientes registrados.
