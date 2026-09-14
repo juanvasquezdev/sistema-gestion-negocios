@@ -112,6 +112,13 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
 - Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
 - **Lint:** relevante ya corregido (commit `59f5ce4`), ver `docs/CONTEXTO-ACTUAL.md`.
+- **Fase visual (Magic UI) — CERRADA (14 sept 2026)**, detalle y patrones en `docs/design-system.md`:
+  - Number Ticker en los 6 KPIs del Resumen (`19b80d6`).
+  - Fuente del body corregida a Geist (`cf8cf1c`).
+  - `Skeleton` en los estados de carga de los 5 módulos (`3a9a2db`, `e2855d9`).
+  - Sidebar con nombre real del negocio, persona, rol, ítem activo y hover (`762e0e0`; `/auth/perfil` ahora devuelve `nombre` y `negocioNombre`, y responde 401 si el usuario está inactivo).
+  - Landing (`d20e217`): `APP_NAME`, saludo con sesión, saltar la intro (clic, Enter o Espacio), intro una vez por sesión y reduced motion, también en Number Ticker.
+  - **Diferido, no implementado:** fondo de puntos de Magic UI en la landing.
 - **Paginación — CERRADA en los 5 módulos**: `lib/[modulo].ts` tipado con `RespuestaPaginada<T>` (consolidada en `frontend/src/lib/paginacion.ts`), componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` + `<Paginacion />` en cada `dashboard/[modulo]/page.tsx`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
 ## Próximos pasos (orden acordado)
@@ -129,7 +136,8 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 
 **Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
-Después de esta lista técnica: retoques visuales/animaciones más pulidos (pospuesto a propósito).
+11. ~~Fase visual con Magic UI~~ ✅ — fuente, Skeleton en los 5 módulos, sidebar y landing (ver "Estado actual del sistema" y `docs/design-system.md`). Diferido: fondo de puntos de Magic UI en la landing.
+12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada.
 
 ## Notas para no repetir errores ya resueltos
 
