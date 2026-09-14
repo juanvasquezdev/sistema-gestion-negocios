@@ -125,7 +125,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 7. ~~Paginación en los 5 módulos~~ ✅ — verificado en código, ver `docs/CONTEXTO-ACTUAL.md` (commits `6012090`, `27673e5`).
 8. **Decidir y aplicar el nombre nuevo** (ver nota arriba) — pendiente de decisión de Juan.
 9. Seguir usando y mejorando el sistema en local — decisión explícita de Juan, no un bloqueo técnico.
-10. PWA para instalar en móvil/PC.
+10. ~~PWA para instalar en móvil/PC~~ ✅ — `@serwist/turbopack`, commit `b5e61f2`. Instalación en PC verificada por Juan (standalone). Seguimiento, no bloqueante: íconos placeholder y `apple-touch-icon` cuando haya logo definitivo; probar en celular cuando haya HTTPS (deploy). Detalle en `docs/CONTEXTO-ACTUAL.md`.
 
 **Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
