@@ -6,6 +6,7 @@ import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -128,7 +129,47 @@ export default function DeudasPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {cargando ? (
-        <p className="text-sm text-muted-foreground">Cargando deudas...</p>
+        // Estado de carga: la misma tabla (encabezados reales) con 5 filas Skeleton. Son un término medio:
+        // con listas cortas la tabla se encoge un poco al llegar los datos, y con páginas llenas crece.
+        <Table aria-busy="true">
+          <caption className="sr-only">Cargando deudas...</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Fecha</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Monto original</TableHead>
+              <TableHead>Saldo pendiente</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Acciones</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }, (_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-4 w-28" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  {/* píldora de estado */}
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </TableCell>
+                <TableCell>
+                  {/* h-7 = Button size="sm" ("Registrar abono") */}
+                  <Skeleton className="ml-auto h-7 w-32" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : deudas.length === 0 ? (
         <p className="text-sm text-muted-foreground">No hay deudas registradas.</p>
       ) : (

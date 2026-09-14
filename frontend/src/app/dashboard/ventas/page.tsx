@@ -8,6 +8,7 @@ import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -181,7 +182,42 @@ export default function VentasPage() {
       {error && <p className="text-sm text-red-600">{error}</p>}
 
       {cargando ? (
-        <p className="text-sm text-muted-foreground">Cargando ventas...</p>
+        // Estado de carga: la misma tabla (encabezados reales) con 5 filas Skeleton. Son un término medio:
+        // con listas cortas la tabla se encoge un poco al llegar los datos, y con páginas llenas crece.
+        <Table aria-busy="true">
+          <caption className="sr-only">Cargando ventas...</caption>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Fecha</TableHead>
+              <TableHead>Cliente</TableHead>
+              <TableHead>Productos</TableHead>
+              <TableHead>Total</TableHead>
+              <TableHead>Estado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 5 }, (_, i) => (
+              <TableRow key={i}>
+                <TableCell>
+                  <Skeleton className="h-4 w-28" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-14" />
+                </TableCell>
+                <TableCell>
+                  <Skeleton className="h-4 w-20" />
+                </TableCell>
+                <TableCell>
+                  {/* píldora de estado (Pagada/Pendiente) */}
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       ) : ventas.length === 0 ? (
         <p className="text-sm text-muted-foreground">Aún no tienes ventas registradas.</p>
       ) : (
