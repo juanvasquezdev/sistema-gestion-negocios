@@ -1,7 +1,9 @@
 // frontend/src/app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
+import { SerwistProvider } from "@serwist/turbopack/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { APP_DESCRIPTION, APP_NAME } from "@/lib/marca";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,8 +23,18 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Fast Inventory",
-  description: "Sistema de gestión para tiendas y grandes negocios",
+  title: APP_NAME,
+  description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: APP_NAME,
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0A0A0A",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -32,7 +44,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <TooltipProvider>{children}</TooltipProvider>
+        {/* SW apagado en desarrollo para no interferir con next dev.
+            cacheOnNavigation/reloadOnOnline apagados: no cachear páginas del dashboard
+            ni recargar solo (se perdería, p. ej., un carrito de venta a medio llenar). */}
+        <SerwistProvider
+          swUrl="/serwist/sw.js"
+          disable={process.env.NODE_ENV === "development"}
+          cacheOnNavigation={false}
+          reloadOnOnline={false}
+        >
+          <TooltipProvider>{children}</TooltipProvider>
+        </SerwistProvider>
       </body>
     </html>
   );

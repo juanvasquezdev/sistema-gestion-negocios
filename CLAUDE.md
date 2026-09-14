@@ -32,7 +32,7 @@ Invocarlos es usar el mecanismo de subagentes de Claude Code con ese nombre quie
 
 Juan aprobó explícitamente estas dos, no hace falta volver a preguntar:
 
-- **PWA:** `Serwist` (`@serwist/next` + `serwist`) — gratis, MIT, mantenido activamente para Next App Router. Se prefirió sobre `next-pwa` (mantenimiento más lento) y sobre escribirlo a mano.
+- **PWA:** Serwist vía **`@serwist/turbopack`** (+ `serwist` + `esbuild`, devDependencies) — gratis, MIT, mantenido activamente para Next App Router. Se prefirió sobre `next-pwa` (mantenimiento más lento) y sobre escribirlo a mano. **No usar `@serwist/next`**: es un plugin de webpack y Next 16 construye con Turbopack por defecto (obligaría a `next build --webpack`). Decisión de Juan, 14 sept 2026.
 - **Visual/UI:** `Magic UI` (magicui.design) — componentes gratis y open source (MIT) que se copian al repo, hechos con Tailwind + Motion. Se prefirió sobre Aceternity UI (su capa gratis es más chica; lo bueno está en un plan de pago que no se necesita acá). Uso: SOLO para efectos decorativos/animación, nunca para reemplazar un componente shadcn/Base UI que ya funciona — ver `docs/design-system.md`.
 
 No introducir ninguna otra librería de UI/PWA sin que Juan lo apruebe de nuevo.
