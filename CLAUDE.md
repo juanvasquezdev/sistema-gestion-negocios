@@ -118,7 +118,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
   - `Skeleton` en los estados de carga de los 5 módulos (`3a9a2db`, `e2855d9`).
   - Sidebar con nombre real del negocio, persona, rol, ítem activo y hover (`762e0e0`; `/auth/perfil` ahora devuelve `nombre` y `negocioNombre`, y responde 401 si el usuario está inactivo).
   - Landing (`d20e217`): `APP_NAME`, saludo con sesión, saltar la intro (clic, Enter o Espacio), intro una vez por sesión y reduced motion, también en Number Ticker.
-  - **Diferido, no implementado:** fondo de puntos de Magic UI en la landing.
+  - Fondo de puntos de la landing (`b4e1e9a`): Dot Pattern de Magic UI adaptado con `<pattern>` SVG (5 nodos, sin glow ni framer-motion), fondo sólido en las tarjetas de auth y sesión.
 - **Paginación — CERRADA en los 5 módulos**: `lib/[modulo].ts` tipado con `RespuestaPaginada<T>` (consolidada en `frontend/src/lib/paginacion.ts`), componente reutilizable `components/paginacion.tsx`, estado `pagina`/`totalPaginas` + `<Paginacion />` en cada `dashboard/[modulo]/page.tsx`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
 ## Próximos pasos (orden acordado)
@@ -136,7 +136,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 
 **Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
-11. ~~Fase visual con Magic UI~~ ✅ — fuente, Skeleton en los 5 módulos, sidebar y landing (ver "Estado actual del sistema" y `docs/design-system.md`). Diferido: fondo de puntos de Magic UI en la landing.
+11. ~~Fase visual con Magic UI~~ ✅ — fuente, Skeleton en los 5 módulos, sidebar y landing (ver "Estado actual del sistema" y `docs/design-system.md`). Fondo de puntos de la landing cerrado en `b4e1e9a`.
 12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada.
 
 ## Notas para no repetir errores ya resueltos
