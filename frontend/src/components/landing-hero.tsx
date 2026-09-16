@@ -8,6 +8,7 @@ import { motion, AnimatePresence, MotionConfig, useReducedMotion } from 'framer-
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { APP_NAME } from '@/lib/marca';
+import { DotPattern } from '@/components/magicui/dot-pattern';
 
 interface Usuario {
   email: string;
@@ -137,7 +138,16 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
     // reducedMotion="user": si el sistema pide reducir movimiento, framer-motion quita los desplazamientos
     // y escalados (y, scaleX) y deja solo los fundidos de opacidad.
     <MotionConfig reducedMotion="user">
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#FAFAFA] px-6 py-16">
+      <div className="relative isolate min-h-screen w-full flex items-center justify-center bg-[#FAFAFA] px-6 py-16">
+        {/* Fondo decorativo. -z-10 + isolate en el contenedor: los puntos quedan sobre el fondo
+            #FAFAFA pero debajo del texto y de la tarjeta, sin restarles contraste. La mascara
+            radial los apaga en el centro, justo donde va el contenido. */}
+        <DotPattern
+          width={24}
+          height={24}
+          cr={1}
+          className="-z-10 text-[#0A0A0A]/[0.14] [mask-image:radial-gradient(ellipse_55%_45%_at_50%_50%,transparent_20%,black_80%)]"
+        />
         <AnimatePresence mode="wait">
           {paso === 'marca' && (
             <motion.div
@@ -187,7 +197,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
               transition={{ duration: 0.4 }}
-              className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl p-8 flex flex-col gap-3"
+              className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl bg-[#FAFAFA] p-8 flex flex-col gap-3"
             >
               <h2 className="font-[family-name:var(--font-display)] font-medium text-2xl text-[#0A0A0A] mb-2 text-center">
                 {APP_NAME}
@@ -212,7 +222,7 @@ export function LandingHero({ usuario }: { usuario: Usuario | null }) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 12 }}
-              className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl p-8 flex flex-col gap-3"
+              className="w-full max-w-sm border border-[#0A0A0A]/12 rounded-2xl bg-[#FAFAFA] p-8 flex flex-col gap-3"
             >
               <h2 className="font-[family-name:var(--font-display)] font-medium text-2xl text-[#0A0A0A]">
                 Hola, {usuario.nombre.split(' ')[0]}
