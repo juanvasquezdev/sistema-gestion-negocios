@@ -14,7 +14,9 @@ Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios
 - @docs/contexto-sistema-negocios.md — propósito, modelo de datos y decisiones de diseño cerradas
 - @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, prioridad actual y lint pendiente
 - @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
-- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T3, CERRADA), fuente de verdad para ese tema
+- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T3 cerrados, **T4 abierto**), fuente de verdad para ese tema
+- `backend/TESTING-PLAN.md` — tests e2e (auth y aislamiento multi-tenant): cómo correrlos, base de test y casos cubiertos
+- `backend/BACKLOG.md` — backlog técnico que no es de seguridad (B1, B2)
 - `docs/design-system.md` — tokens visuales, qué es Magic UI vs shadcn/Base UI, y patrones ya existentes que no hay que reinventar
 
 ## Agentes especializados (subagentes de Claude Code)
@@ -64,7 +66,7 @@ Usuario de prueba: `juan@test.com` / `password123` — ADMIN, negocio "Tienda Do
 
 ## Reglas críticas (no negociables sin aprobación explícita)
 
-- **Multi-tenancy real**: aislamiento por `negocioId`. El `negocioId` SIEMPRE sale del JWT del usuario autenticado — nunca confiar en uno enviado por el cliente. Toda consulta a datos de negocio usa `findFirst({ id, negocioId })`. Verificado en los 7 servicios, sin fugas (ver `backend/SECURITY-BACKLOG.md`).
+- **Multi-tenancy real**: aislamiento por `negocioId`. El `negocioId` SIEMPRE sale del JWT del usuario autenticado — nunca confiar en uno enviado por el cliente. Toda consulta a datos de negocio usa `findFirst({ id, negocioId })`. Verificado en los 7 servicios, sin fugas (ver `backend/SECURITY-BACKLOG.md`), y cubierto por tests e2e para Producto, Cliente y Venta (`backend/test/aislamiento.e2e-spec.ts`).
 - **Roles**: `ADMIN` y `VENDEDOR`, siempre en mayúsculas (el JWT los guarda así — ya hubo un bug por usar `'admin'` en minúscula en `@Roles()`, corregido).
 - **Prisma se mantiene en 6.19.3** salvo decisión explícita mía. No proponer cambios de schema o migraciones sin analizar primero el impacto.
 - **shadcn/ui usa Base UI**, no Radix: usar el patrón `render`, nunca asumir `asChild`.
@@ -100,6 +102,9 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
   - Venta, Deuda: ADMIN y VENDEDOR (explícito).
 - `PrismaExceptionFilter` global traduce P2002/P2003/P2025 a mensajes en español.
 - **Backlog de seguridad (T0-T3) — CERRADO.** Rate limiting, matriz de roles, multi-tenancy, auth, helmet y `.env.example` verificados. Detalle en `backend/SECURITY-BACKLOG.md`.
+- **T4 — ABIERTO (encontrado 16 sept 2026):** un usuario desactivado sigue operando en la API hasta que vence su token (2 h), porque `JwtStrategy.validate()` no consulta la base; solo `/auth/login` y `/auth/perfil` lo bloquean. No es fuga entre negocios. Resolver antes de la Fase 3 del Superadmin. Detalle en `backend/SECURITY-BACKLOG.md`.
+- **Configuración global en `src/configurar-app.ts`** (commit `bb1e53f`): helmet, trust proxy, `ValidationPipe`, filtros y cookieParser, compartidos por `main.ts` y los tests e2e. CORS y `listen` siguen en `main.ts`.
+- **Tests e2e — CERRADOS (commit `d542653`):** 24 tests en 3 suites (`npm run test:e2e` en `backend/`, ~6 s). Auth (login, 401, 403, usuario desactivado, rate limit 429) y aislamiento multi-tenant (B no ve, edita ni borra datos de A: 404; listados solo propios; `negocioId` en el body: 400; ventas cruzadas: 400). Incluye un `test.failing` que documenta T4. Usan la base **`sistema_negocios_test`**, nunca la de desarrollo (abortan si la base no termina en `_test`). Detalle en `backend/TESTING-PLAN.md`.
 - **Lint:** relevante ya corregido (commit `59f5ce4`); queda solo Prettier/estilo preexistente y 2 items menores sin tocar a propósito, ver `docs/CONTEXTO-ACTUAL.md`.
 - **Paginación — CERRADA en los 5 módulos** (Cliente, Proveedor, Producto, Venta, Deuda): `backend/src/common/dto/paginacion.dto.ts` (pagina/limite, defaults 1/20), `listar()` devuelve `{ data, total, pagina, totalPaginas }` en los 5 services, controller recibe `@Query() paginacion: PaginacionDto`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
@@ -137,7 +142,9 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 **Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
 11. ~~Fase visual con Magic UI~~ ✅ — fuente, Skeleton en los 5 módulos, sidebar y landing (ver "Estado actual del sistema" y `docs/design-system.md`). Fondo de puntos de la landing cerrado en `b4e1e9a`.
-12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada.
+12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada. **Corrección al plan (16 sept 2026):** `Rol` es una **tabla** (`roles`), no un enum. `SUPER_ADMIN` se agrega como fila (seed/upsert, igual que `ADMIN`/`VENDEDOR` en `prisma/seed.ts`), **no con una migración de enum**.
+13. ~~Tests e2e de Auth y aislamiento multi-tenant~~ ✅ — commit `d542653`, ver `backend/TESTING-PLAN.md`.
+14. **Orden acordado desde aquí: T4 → Superadmin Fase 1.** T4 va primero porque suspender negocios (Fase 3) tendría el mismo hueco. Backlog técnico sin prioridad asignada: B1 (`DELETE /productos/:id` probablemente siempre 409, sin probar) y B2 (`start:prod` apunta a `dist/main`, relevante para el deploy), en `backend/BACKLOG.md`.
 
 ## Notas para no repetir errores ya resueltos
 
@@ -148,4 +155,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - Docker debe estar arriba (`docker compose up -d`) antes de `npm run start:dev` del backend, si no falla con `PrismaClientInitializationError`.
 - Usar `.gitattributes` (ya existe) para forzar LF — evita diffs falsos masivos por CRLF de Windows (ya pasó una vez, ~93 archivos, se corrigió en `5d2eb0e`).
 - Antes de asumir que algo está "pendiente" o "sin commitear": correr `git log --oneline` y `git status` — varias veces se documentó como pendiente algo que ya estaba commiteado.
+- Los tests e2e (`npm run test:e2e`) necesitan Docker arriba y usan `backend/.env.test` (ignorado por git) con la base `sistema_negocios_test`. Nunca apuntarlos a `sistema_negocios`. Migraciones nuevas: aplicarlas también a la base de test, confirmando antes con `npx prisma migrate status` que el datasource es `sistema_negocios_test` (ver `backend/TESTING-PLAN.md`).
+- Si un test de aislamiento falla de forma inesperada, no ajustarlo para que pase: puede ser una fuga real. Detenerse y avisar.
+- La ruta de categorías es `/categoria` (singular); las demás son plurales (`/productos`, `/clientes`...).
 - `npm run lint` en `backend/` trae `--fix` — reescribe archivos aunque solo quieras revisar el estado (pasó dos veces, ~43 errores de Prettier preexistentes se auto-formatean). Revisar el diff y revertir si no era la intención, antes de commitear cualquier otra cosa.

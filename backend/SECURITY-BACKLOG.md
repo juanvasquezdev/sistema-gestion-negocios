@@ -1,5 +1,7 @@
 # Security Backlog — Fast Inventory
 
+> **Estado (2026-09-16):** T0-T3 cerrados. **T4 abierto** (usuario desactivado sigue operando hasta 2 h), a resolver antes de la Fase 3 del Superadmin. Tests e2e de auth y aislamiento: `TESTING-PLAN.md`.
+
 Auditoría de seguridad del backend. Reconstruido el 2026-09-09 tras verificar directamente el código en el repo (no por reporte de terceros).
 
 ## Cerrado
@@ -19,7 +21,7 @@ No se requieren más cambios para T1.
 **Estado: COMPLETO**, verificado en código y en respuestas HTTP reales el 2026-09-09.
 
 - `helmet` instalado (`backend/package.json`).
-- `app.use(helmet())` en `main.ts`, como primera línea tras crear la app — antes de `trust proxy`, los pipes/filters globales, `cookieParser` y `enableCors`.
+- `app.use(helmet())` en `main.ts` (desde el commit `bb1e53f` vive en `src/configurar-app.ts`, compartido por `main.ts` y los tests e2e), como primera línea tras crear la app — antes de `trust proxy`, los pipes/filters globales, `cookieParser` y `enableCors`.
 - Verificado con `curl` que las respuestas ahora incluyen `Content-Security-Policy`, `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `X-DNS-Prefetch-Control`, entre otros.
 - Confirmado que no rompe nada existente: login (`POST /auth/login`) sigue devolviendo `200` y `Access-Control-Allow-Origin` sigue presente para el origen del frontend (CORS no afectado por Helmet).
 
@@ -61,7 +63,24 @@ Revisado uso de `negocioId` en los 7 servicios (`cliente`, `producto`, `categori
 
 ## Pendiente — gaps reales encontrados
 
-(sin pendientes por ahora — ver T2 y T3 en Cerrado)
+### T4 — Usuario desactivado sigue operando hasta que vence su token (2 h)
+**Estado: ABIERTO**, encontrado el 2026-09-16 durante la inspección para los tests e2e. **Sin implementar el arreglo.**
+
+**Prioridad:** resolver **antes de la Fase 3 del Panel de Superadmin**. Suspender un negocio tendría exactamente el mismo hueco: sus usuarios seguirían operando con el token que ya tienen.
+
+- **Qué pasa:** `JwtStrategy.validate()` (`src/auth/jwt.strategy.ts`) arma el usuario solo con el payload del JWT, sin consultar la base. Si se pone `activo = false`, un token emitido antes sigue siendo válido para toda la API (`/productos`, `/ventas`, `/deudas`, etc. de su propio negocio) hasta que expira.
+- **Qué sí lo bloquea hoy:** `POST /auth/login` (401) y `GET /auth/perfil` (401, `auth.service.ts::perfil`). Por eso el dashboard lo saca de la interfaz, pero la API sigue abierta.
+- **No es una fuga entre negocios:** el token solo da acceso a los datos de su propio `negocioId`.
+- **Cubierto por test:** `test/auth.e2e-spec.ts` tiene un `test.failing` ("T4: endpoint de negocio...") que hoy confirma el 200. Al arreglar T4, ese test empieza a fallar: quitar el `.failing`.
+- **Dirección posible (a decidir con Juan, no aprobada):** consultar `activo` del usuario (y en su momento el estado del negocio) en `validate()`, con el costo de una consulta por petición; o tokens más cortos con refresh. Ver también "Rotación de JWT_SECRET / revocación de tokens" en Diferido.
+
+### Defensa en profundidad — `actualizar()` usa `update({ where: { id } })`
+**Estado: ABIERTO, riesgo bajo hoy**, encontrado el 2026-09-16. **Sin arreglar.**
+
+- En Cliente, Producto, Categoría y Proveedor, `actualizar()` valida la pertenencia con `buscarUno(negocioId, id)` y después hace `update({ where: { id }, data: dto })`. Deuda hace lo mismo en `registrarAbono` (con `data` armado en el service, sin `dto`).
+- **Hoy es seguro:** `negocioId` no está en ningún DTO, y el `ValidationPipe` global (`whitelist` + `forbidNonWhitelisted`, en `src/configurar-app.ts`) rechaza con 400 un body que lo incluya. Verificado por `test/aislamiento.e2e-spec.ts` ("B envía el negocioId de A en el body").
+- **El riesgo:** es la única barrera. Si algún día se afloja la configuración del pipe o un DTO declara `negocioId`, un `PATCH` podría mover un registro a otro negocio. Los tests e2e lo detectarían.
+- **Dirección posible:** `updateMany({ where: { id, negocioId }, data })` o armar `data` sin campos de tenant. A evaluar como tarea propia.
 
 ## Diferido (no v1)
 - CSRF: mitigado por `sameSite` + que el frontend no es cross-origin no autenticado; revisar si se agregan integraciones externas.
