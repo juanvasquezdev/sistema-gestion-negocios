@@ -80,7 +80,10 @@ Con migraciones nuevas: repetir los tres últimos pasos. Los roles (`ADMIN`, `VE
 - [x] VENDEDOR en endpoint solo ADMIN (`DELETE /productos/:id`): 403 y el producto sigue existiendo.
 - [x] Usuario desactivado: `GET /auth/perfil` con token emitido antes: 401.
 - [x] Usuario desactivado: login: 401.
-- [ ] **T4 (`test.failing`)**: usuario desactivado en endpoint de negocio (`GET /productos`) debería dar 401. Hoy da 200 (confirmado). Al arreglar T4, quitar el `.failing`. Ver `SECURITY-BACKLOG.md`.
+- [x] **T4** (commit `887fcbb`): usuario desactivado en endpoint de negocio (`GET /productos`) con un token emitido antes: 401 "Sesión inválida." (era `test.failing`).
+- [x] Usuario reactivado: el mismo token vuelve a funcionar (documenta que T4 no es revocación real).
+- [x] Cambio de rol con el mismo token, VENDEDOR → ADMIN: `/proveedores` pasa de 403 a 200 y `/auth/perfil` devuelve `rol: 'ADMIN'`.
+- [x] Cambio de rol con el mismo token, ADMIN → VENDEDOR: `/proveedores` pasa de 200 a 403.
 - [x] Rate limit (app aparte): 5 intentos 401, el 6.º 429 con "Demasiados intentos. Espera un minuto e intenta de nuevo."
 
 ### Aislamiento multi-tenant — `test/aislamiento.e2e-spec.ts`

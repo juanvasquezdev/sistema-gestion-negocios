@@ -4,6 +4,15 @@ Problemas funcionales y de configuración encontrados que **no son de seguridad*
 
 ## Abierto
 
+### B3 — El frontend no redirige a `/login` ante un 401 en plena sesión — **SIGUIENTE**
+**Estado: ABIERTO, prioridad: siguiente tarea** (acordado con Juan el 2026-09-17, después de cerrar T4). Deducido leyendo el código, **no probado en el navegador**.
+
+- `frontend/src/lib/api.ts` lanza `ApiError(status, data)` sin tratar el 401 de forma especial, y no hay `middleware.ts`/`proxy.ts`.
+- Las páginas del dashboard capturan el error y muestran un mensaje genérico ("No se pudieron cargar los clientes."); los formularios muestran `err.data.message` ("Sesión inválida.").
+- `dashboard/layout.tsx` (Server Component) sí redirige a `/login` si `/auth/perfil` falla, pero en App Router los layouts no se vuelven a ejecutar al navegar entre páginas del dashboard: solo al recargar o entrar de nuevo.
+- **Por qué importa ahora:** desde T4 (`887fcbb`), desactivar a un usuario corta la API de inmediato. El usuario queda en una pantalla con errores hasta recargar, en vez de ir al login. No es un problema de seguridad (no puede leer ni escribir nada), sí de experiencia.
+- **Dirección propuesta (a confirmar con plan):** en `lib/api.ts`, ante un 401 en el navegador, ir a `/login`, sin afectar el propio `POST /auth/login` (que responde 401 con credenciales incorrectas y debe mostrar su mensaje).
+
 ### B1 — `DELETE /productos/:id` probablemente responde siempre 409
 **Estado: ABIERTO, sin probar.** Encontrado el 2026-09-16 leyendo el código durante la inspección para los tests e2e.
 

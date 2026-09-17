@@ -1,10 +1,21 @@
 # Security Backlog — Fast Inventory
 
-> **Estado (2026-09-16):** T0-T3 cerrados. **T4 abierto** (usuario desactivado sigue operando hasta 2 h), a resolver antes de la Fase 3 del Superadmin. Tests e2e de auth y aislamiento: `TESTING-PLAN.md`.
+> **Estado (2026-09-17):** T0-T4 cerrados (T4: commit `887fcbb`). Abierto con riesgo bajo: defensa en profundidad en `actualizar()`. Pendiente para la Fase 3 del Superadmin: estado del negocio en `validate()` y en el login. Tests e2e de auth y aislamiento: `TESTING-PLAN.md`.
 
 Auditoría de seguridad del backend. Reconstruido el 2026-09-09 tras verificar directamente el código en el repo (no por reporte de terceros).
 
 ## Cerrado
+
+### T4 — Usuario desactivado seguía operando hasta que vencía su token (2 h)
+**Estado: CERRADO**, commit `887fcbb` (2026-09-17). Encontrado el 2026-09-16 durante la inspección para los tests e2e. Opción (a) aprobada por Juan.
+
+- **Qué pasaba:** `JwtStrategy.validate()` armaba `request.user` solo con el payload del JWT. Con `activo = false`, un token emitido antes seguía sirviendo para toda la API de su negocio hasta expirar; solo `/auth/login` y `/auth/perfil` lo bloqueaban. No era fuga entre negocios.
+- **Arreglo:** `validate()` es `async` y consulta `usuario.findFirst({ id: sub, negocioId, activo: true })` en cada petición autenticada. Si no lo encuentra: **401 "Sesión inválida."** (mismo mensaje que `/auth/perfil`). Sin token, firma inválida o token vencido siguen dando el 401 "Unauthorized" de Passport.
+- **Rol y email salen de la base**, no del token: un cambio de rol aplica en la siguiente petición, sin volver a iniciar sesión. `UsuarioAutenticado` no cambió; controllers, `RolesGuard`, `login` y `perfil` sin tocar (`perfil` repite la consulta para traer los nombres: redundante e inofensivo).
+- **Costo:** 2 consultas por petición autenticada, ambas por clave primaria (`usuarios` por `id`, `roles` por `id`), confirmado con el log de consultas de Prisma. `npm run test:e2e`: 6,4 s / 5,6 s antes, 6,5 s / 6,4 s después.
+- **No es revocación real:** el token no se invalida; si el usuario se reactiva, vuelve a servir hasta vencer. Ver "Revocación real de tokens" en Diferido.
+- **Punto de extensión para la Fase 3 del Superadmin:** comentario en el `where` de esa consulta, donde irá la condición de negocio no suspendido. Sin campo ni condición nueva todavía.
+- **Tests** (`test/auth.e2e-spec.ts`): usuario desactivado en `GET /productos` → 401 "Sesión inválida."; al reactivarlo el mismo token vuelve a funcionar; VENDEDOR → ADMIN y ADMIN → VENDEDOR con el mismo token cambian el acceso a `/proveedores` (403 ↔ 200) y `/auth/perfil` devuelve el rol nuevo.
 
 ### T1 — Rate limiting en auth (login + registrar-negocio)
 **Estado: COMPLETO**, verificado en código el 2026-09-09.
@@ -63,16 +74,10 @@ Revisado uso de `negocioId` en los 7 servicios (`cliente`, `producto`, `categori
 
 ## Pendiente — gaps reales encontrados
 
-### T4 — Usuario desactivado sigue operando hasta que vence su token (2 h)
-**Estado: ABIERTO**, encontrado el 2026-09-16 durante la inspección para los tests e2e. **Sin implementar el arreglo.**
-
-**Prioridad:** resolver **antes de la Fase 3 del Panel de Superadmin**. Suspender un negocio tendría exactamente el mismo hueco: sus usuarios seguirían operando con el token que ya tienen.
-
-- **Qué pasa:** `JwtStrategy.validate()` (`src/auth/jwt.strategy.ts`) arma el usuario solo con el payload del JWT, sin consultar la base. Si se pone `activo = false`, un token emitido antes sigue siendo válido para toda la API (`/productos`, `/ventas`, `/deudas`, etc. de su propio negocio) hasta que expira.
-- **Qué sí lo bloquea hoy:** `POST /auth/login` (401) y `GET /auth/perfil` (401, `auth.service.ts::perfil`). Por eso el dashboard lo saca de la interfaz, pero la API sigue abierta.
-- **No es una fuga entre negocios:** el token solo da acceso a los datos de su propio `negocioId`.
-- **Cubierto por test:** `test/auth.e2e-spec.ts` tiene un `test.failing` ("T4: endpoint de negocio...") que hoy confirma el 200. Al arreglar T4, ese test empieza a fallar: quitar el `.failing`.
-- **Dirección posible (a decidir con Juan, no aprobada):** consultar `activo` del usuario (y en su momento el estado del negocio) en `validate()`, con el costo de una consulta por petición; o tokens más cortos con refresh. Ver también "Rotación de JWT_SECRET / revocación de tokens" en Diferido.
+### Pendiente para la Fase 3 del Superadmin (suspender negocios)
+- Agregar la condición de negocio no suspendido en `JwtStrategy.validate()` (punto de extensión ya marcado).
+- **El login también debe revisar el estado del negocio**, no solo `usuario.activo` (`auth.service.ts::login`). Si no, un usuario de un negocio suspendido podría obtener un token nuevo (aunque `validate()` lo rechace después, el login respondería 200).
+- `/auth/perfil` hace su propia consulta: revisar que también respete el estado del negocio.
 
 ### Defensa en profundidad — `actualizar()` usa `update({ where: { id } })`
 **Estado: ABIERTO, riesgo bajo hoy**, encontrado el 2026-09-16. **Sin arreglar.**
@@ -85,5 +90,5 @@ Revisado uso de `negocioId` en los 7 servicios (`cliente`, `producto`, `categori
 ## Diferido (no v1)
 - CSRF: mitigado por `sameSite` + que el frontend no es cross-origin no autenticado; revisar si se agregan integraciones externas.
 - Logging/monitoreo de intentos de login fallidos (más allá del rate limit).
-- Rotación de `JWT_SECRET` / revocación de tokens (no hay blacklist — logout solo borra la cookie, el JWT sigue siendo válido hasta expirar).
+- **Revocación real de tokens** (actualizado 2026-09-17, tras T4): hoy no hay blacklist ni versión de token. Logout solo borra la cookie y el JWT sigue siendo válido hasta expirar (2 h); T4 solo lo rechaza mientras el usuario esté inactivo. **Cambiar la contraseña no cierra las sesiones activas** (hoy tampoco existe un flujo de cambio de contraseña; tenerlo en cuenta cuando se cree). Opciones evaluadas: `tokenVersion` en `Usuario` (**requiere migración**; se sube al desactivar o cambiar contraseña) o tokens cortos + refresh tokens (endpoint nuevo, probablemente tabla nueva, cambios en el frontend). También rotación de `JWT_SECRET`.
 - **Condición de carrera en `venta.service.ts::crear()` (encontrado 2026-09-09):** el chequeo de stock disponible (`producto.inventario?.stockActual`) se lee antes de abrir la transacción; el descuento de stock (`decrement`) ocurre dentro de ella. Dos ventas concurrentes del mismo producto podrían leer el mismo stock "viejo", pasar ambas el chequeo, y terminar sobrevendiendo. Riesgo bajo hoy (una sola tienda, poca concurrencia real), pero es una debilidad real de diseño a resolver antes de escalar a más negocios/tráfico simultáneo — por ejemplo moviendo el chequeo dentro de la transacción con un `update` condicional (`WHERE stockActual >= cantidad`) que falle si no alcanza.

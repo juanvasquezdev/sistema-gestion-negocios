@@ -14,9 +14,9 @@ Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios
 - @docs/contexto-sistema-negocios.md — propósito, modelo de datos y decisiones de diseño cerradas
 - @docs/CONTEXTO-ACTUAL.md — estado técnico día a día, prioridad actual y lint pendiente
 - @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
-- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T3 cerrados, **T4 abierto**), fuente de verdad para ese tema
+- `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T4 cerrados), fuente de verdad para ese tema
 - `backend/TESTING-PLAN.md` — tests e2e (auth y aislamiento multi-tenant): cómo correrlos, base de test y casos cubiertos
-- `backend/BACKLOG.md` — backlog técnico que no es de seguridad (B1, B2)
+- `backend/BACKLOG.md` — backlog técnico que no es de seguridad (B1, B2, **B3 siguiente**)
 - `docs/design-system.md` — tokens visuales, qué es Magic UI vs shadcn/Base UI, y patrones ya existentes que no hay que reinventar
 
 ## Agentes especializados (subagentes de Claude Code)
@@ -102,9 +102,9 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
   - Venta, Deuda: ADMIN y VENDEDOR (explícito).
 - `PrismaExceptionFilter` global traduce P2002/P2003/P2025 a mensajes en español.
 - **Backlog de seguridad (T0-T3) — CERRADO.** Rate limiting, matriz de roles, multi-tenancy, auth, helmet y `.env.example` verificados. Detalle en `backend/SECURITY-BACKLOG.md`.
-- **T4 — ABIERTO (encontrado 16 sept 2026):** un usuario desactivado sigue operando en la API hasta que vence su token (2 h), porque `JwtStrategy.validate()` no consulta la base; solo `/auth/login` y `/auth/perfil` lo bloquean. No es fuga entre negocios. Resolver antes de la Fase 3 del Superadmin. Detalle en `backend/SECURITY-BACKLOG.md`.
+- **T4 — CERRADO (commit `887fcbb`, 17 sept 2026):** `JwtStrategy.validate()` consulta el usuario en cada petición (`id` + `negocioId` del token + `activo`, 2 consultas por clave primaria). Un usuario desactivado recibe 401 "Sesión inválida." en la siguiente petición, y **el rol y el email se leen de la base, no del token**: un cambio de rol aplica sin volver a iniciar sesión. No es revocación real (si se reactiva, su token vuelve a servir; diferido en el backlog). Punto de extensión marcado para la suspensión de negocios (Fase 3). Detalle en `backend/SECURITY-BACKLOG.md`.
 - **Configuración global en `src/configurar-app.ts`** (commit `bb1e53f`): helmet, trust proxy, `ValidationPipe`, filtros y cookieParser, compartidos por `main.ts` y los tests e2e. CORS y `listen` siguen en `main.ts`.
-- **Tests e2e — CERRADOS (commit `d542653`):** 24 tests en 3 suites (`npm run test:e2e` en `backend/`, ~6 s). Auth (login, 401, 403, usuario desactivado, rate limit 429) y aislamiento multi-tenant (B no ve, edita ni borra datos de A: 404; listados solo propios; `negocioId` en el body: 400; ventas cruzadas: 400). Incluye un `test.failing` que documenta T4. Usan la base **`sistema_negocios_test`**, nunca la de desarrollo (abortan si la base no termina en `_test`). Detalle en `backend/TESTING-PLAN.md`.
+- **Tests e2e — CERRADOS (commits `d542653`, `887fcbb`):** 27 tests en 3 suites (`npm run test:e2e` en `backend/`, ~6 s). Auth (login, 401, 403, usuario desactivado y reactivado, cambio de rol con el mismo token, rate limit 429) y aislamiento multi-tenant (B no ve, edita ni borra datos de A: 404; listados solo propios; `negocioId` en el body: 400; ventas cruzadas: 400). Usan la base **`sistema_negocios_test`**, nunca la de desarrollo (abortan si la base no termina en `_test`). Detalle en `backend/TESTING-PLAN.md`.
 - **Lint:** relevante ya corregido (commit `59f5ce4`); queda solo Prettier/estilo preexistente y 2 items menores sin tocar a propósito, ver `docs/CONTEXTO-ACTUAL.md`.
 - **Paginación — CERRADA en los 5 módulos** (Cliente, Proveedor, Producto, Venta, Deuda): `backend/src/common/dto/paginacion.dto.ts` (pagina/limite, defaults 1/20), `listar()` devuelve `{ data, total, pagina, totalPaginas }` en los 5 services, controller recibe `@Query() paginacion: PaginacionDto`. Verificado en código el 14 sept 2026, ver `docs/CONTEXTO-ACTUAL.md`.
 
@@ -142,9 +142,10 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 **Deploy (Vercel + Railway): pospuesto explícitamente** — decisión de Juan, ya no por bloqueo técnico (la paginación, que era el punto pendiente, ya está cerrada). Se retoma cuando Juan considere la base y estructura lo suficientemente sólidas. Nota: ya están commiteados varios fixes que probablemente resuelven el bug de login en producción reportado antes (`ef9fb4c` sameSite=none cross-domain, `bcbeac2` origin CORS de Vercel, `1da353c` bind 0.0.0.0 para Railway) — sin verificar en vivo porque el deploy sigue fuera de alcance por ahora.
 
 11. ~~Fase visual con Magic UI~~ ✅ — fuente, Skeleton en los 5 módulos, sidebar y landing (ver "Estado actual del sistema" y `docs/design-system.md`). Fondo de puntos de la landing cerrado en `b4e1e9a`.
-12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada. **Corrección al plan (16 sept 2026):** `Rol` es una **tabla** (`roles`), no un enum. `SUPER_ADMIN` se agrega como fila (seed/upsert, igual que `ADMIN`/`VENDEDOR` en `prisma/seed.ts`), **no con una migración de enum**.
+12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada. **Corrección al plan (16 sept 2026):** `Rol` es una **tabla** (`roles`), no un enum. `SUPER_ADMIN` se agrega como fila (seed/upsert, igual que `ADMIN`/`VENDEDOR` en `prisma/seed.ts`), **no con una migración de enum**. **Para la Fase 3 (suspender negocios):** agregar la condición de negocio en `JwtStrategy.validate()` (punto de extensión ya marcado) **y también en el login**, que hoy solo revisa `usuario.activo` (ver `backend/SECURITY-BACKLOG.md`).
 13. ~~Tests e2e de Auth y aislamiento multi-tenant~~ ✅ — commit `d542653`, ver `backend/TESTING-PLAN.md`.
-14. **Orden acordado desde aquí: T4 → Superadmin Fase 1.** T4 va primero porque suspender negocios (Fase 3) tendría el mismo hueco. Backlog técnico sin prioridad asignada: B1 (`DELETE /productos/:id` probablemente siempre 409, sin probar) y B2 (`start:prod` apunta a `dist/main`, relevante para el deploy), en `backend/BACKLOG.md`.
+14. ~~T4 (usuario desactivado seguía operando)~~ ✅ — commit `887fcbb`.
+15. **Orden acordado desde aquí: B3 → Superadmin Fase 1.** B3: el frontend no redirige a `/login` ante un 401 en plena sesión (`lib/api.ts`), más visible desde T4. Backlog técnico sin prioridad asignada: B1 (`DELETE /productos/:id` probablemente siempre 409, sin probar) y B2 (`start:prod` apunta a `dist/main`, relevante para el deploy). Todo en `backend/BACKLOG.md`.
 
 ## Notas para no repetir errores ya resueltos
 
