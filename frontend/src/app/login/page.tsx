@@ -1,7 +1,7 @@
 // frontend/src/app/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -17,10 +17,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
+  const [sesionExpirada, setSesionExpirada] = useState(false);
+
+  // ?sesion=expirada lo pone lib/api.ts al recibir un 401 en plena sesión. Se lee en un efecto
+  // (la URL solo existe en el cliente) y no con useSearchParams, que exigiría un Suspense.
+  useEffect(() => {
+    queueMicrotask(() => {
+      setSesionExpirada(new URLSearchParams(window.location.search).get('sesion') === 'expirada');
+    });
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSesionExpirada(false);
     setCargando(true);
     try {
       await login(email, password);
@@ -55,6 +65,14 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           className="border border-[#0A0A0A]/12 rounded-2xl p-8 flex flex-col gap-4"
         >
+          {sesionExpirada && (
+            <p
+              className="text-sm text-[#0A0A0A]/70 bg-[#0A0A0A]/[0.03] border border-[#0A0A0A]/12 rounded-lg px-3 py-2"
+              role="status"
+            >
+              Tu sesión expiró o fue cerrada. Vuelve a iniciar sesión.
+            </p>
+          )}
           <div className="flex flex-col gap-2">
             <Label htmlFor="email" className="text-[#0A0A0A]/70">
               Correo electrónico
