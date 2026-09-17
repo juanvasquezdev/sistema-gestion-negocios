@@ -133,15 +133,71 @@ describe('Auth (e2e)', () => {
         .expect(401);
     });
 
-    // Documenta el hueco T4 (backend/SECURITY-BACKLOG.md): JwtStrategy.validate() no consulta la
-    // base, así que un usuario desactivado sigue operando hasta que vence su token (2 h). Hoy
-    // responde 200, por eso el test está marcado como .failing. Cuando se arregle T4, este test
-    // empieza a "fallar": quitar el .failing y dejarlo como test normal.
-    test.failing('T4: endpoint de negocio (GET /productos) con ese token: debería ser 401', async () => {
-      await request(app.getHttpServer())
+    // T4 (backend/SECURITY-BACKLOG.md): JwtStrategy.validate() consulta el usuario en cada
+    // petición, así que desactivarlo corta también los endpoints de negocio, no solo /auth/perfil.
+    it('endpoint de negocio (GET /productos) con ese token: 401 "Sesión inválida."', async () => {
+      const res = await request(app.getHttpServer())
         .get('/productos')
         .set(bearer(tokenEmitidoAntes))
         .expect(401);
+
+      expect(res.body.message).toBe('Sesión inválida.');
+    });
+
+    // La opción elegida para T4 no es revocación real: el token no se invalida, solo se rechaza
+    // mientras el usuario esté inactivo. Si se reactiva, el mismo token vuelve a servir hasta
+    // vencer. La revocación real (tokenVersion o refresh tokens) está diferida en el backlog.
+    // Va al final del describe porque reactiva al usuario.
+    it('al reactivarlo, el mismo token vuelve a funcionar (no es revocación real)', async () => {
+      await prisma.usuario.update({ where: { email: emailDesactivado }, data: { activo: true } });
+
+      await request(app.getHttpServer())
+        .get('/productos')
+        .set(bearer(tokenEmitidoAntes))
+        .expect(200);
+    });
+  });
+
+  // El rol se lee de la base en cada petición, no del token: un cambio de rol aplica sin volver a
+  // iniciar sesión. Se usa /proveedores (módulo entero solo ADMIN) y no DELETE /productos/:id,
+  // para no depender de B1 (backend/BACKLOG.md).
+  describe('cambio de rol con el mismo token', () => {
+    const emailAscendido = `ascendido-${run}@e2e.test`;
+    const emailDegradado = `degradado-${run}@e2e.test`;
+
+    beforeAll(async () => {
+      await crearUsuario(prisma, { negocioId: negocio.id, rol: 'VENDEDOR', email: emailAscendido });
+      await crearUsuario(prisma, { negocioId: negocio.id, rol: 'ADMIN', email: emailDegradado });
+    });
+
+    const cambiarRol = async (email: string, rol: 'ADMIN' | 'VENDEDOR') => {
+      const { id: rolId } = await prisma.rol.findUniqueOrThrow({ where: { nombre: rol } });
+      await prisma.usuario.update({ where: { email }, data: { rolId } });
+    };
+
+    it('VENDEDOR → ADMIN: /proveedores pasa de 403 a 200 y /auth/perfil devuelve rol ADMIN', async () => {
+      const token = await obtenerToken(app, emailAscendido);
+
+      await request(app.getHttpServer()).get('/proveedores').set(bearer(token)).expect(403);
+
+      await cambiarRol(emailAscendido, 'ADMIN');
+
+      await request(app.getHttpServer()).get('/proveedores').set(bearer(token)).expect(200);
+      const perfil = await request(app.getHttpServer())
+        .get('/auth/perfil')
+        .set(bearer(token))
+        .expect(200);
+      expect(perfil.body.rol).toBe('ADMIN');
+    });
+
+    it('ADMIN → VENDEDOR: /proveedores pasa de 200 a 403', async () => {
+      const token = await obtenerToken(app, emailDegradado);
+
+      await request(app.getHttpServer()).get('/proveedores').set(bearer(token)).expect(200);
+
+      await cambiarRol(emailDegradado, 'VENDEDOR');
+
+      await request(app.getHttpServer()).get('/proveedores').set(bearer(token)).expect(403);
     });
   });
 });
