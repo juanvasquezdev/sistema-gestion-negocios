@@ -16,7 +16,7 @@ Estos documentos se sincronizan desde el Proyecto de Claude "Sistema de Negocios
 - @docs/PROGRESO-fast-inventory.md — historial detallado de qué se construyó y notas técnicas
 - `backend/SECURITY-BACKLOG.md` — auditoría de seguridad (T0-T4 cerrados), fuente de verdad para ese tema
 - `backend/TESTING-PLAN.md` — tests e2e (auth y aislamiento multi-tenant): cómo correrlos, base de test y casos cubiertos
-- `backend/BACKLOG.md` — backlog técnico que no es de seguridad (B1, B2, **B3 siguiente**)
+- `backend/BACKLOG.md` — backlog técnico que no es de seguridad (B1, B2 abiertos; B3 cerrado)
 - `docs/design-system.md` — tokens visuales, qué es Magic UI vs shadcn/Base UI, y patrones ya existentes que no hay que reinventar
 
 ## Agentes especializados (subagentes de Claude Code)
@@ -114,6 +114,7 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 - Dashboard protegido (`frontend/src/app/dashboard/layout.tsx`, Server Component, verifica `GET /auth/perfil`, redirige a `/login` si no hay sesión).
 - `/dashboard` muestra el Resumen real directamente (FI-001, cerrado). `/dashboard/resumen` redirige a `/dashboard`.
 - Sidebar (`DashboardShell`) con navegación a los 5 módulos + logout.
+- Sesión expirada o usuario desactivado en plena sesión: `lib/api.ts` redirige a `/login?sesion=expirada` ante un 401 y el login muestra un aviso (B3, `d2672db`).
 - 5 módulos con CRUD completo: Clientes, Proveedores, Productos (con selección/creación inline de Categoría y Proveedor), Ventas (carrito multi-producto, total en vivo), Deudas (listado + registrar abonos).
 - Patrón por módulo: `lib/[modulo].ts` (funciones API) + `app/dashboard/[modulo]/page.tsx` (tabla + Dialog crear/editar + AlertDialog eliminar).
 - **Lint:** relevante ya corregido (commit `59f5ce4`), ver `docs/CONTEXTO-ACTUAL.md`.
@@ -145,7 +146,8 @@ PLAN → INSPECCIÓN → APROBACIÓN → IMPLEMENTACIÓN → TEST → REVIEW →
 12. **Panel de Superadmin** — plan aprobado, **no iniciado**. Ver `docs/CONTEXTO-ACTUAL.md` ("Panel de Superadmin — plan aprobado, no iniciado") antes de tocar nada. **Corrección al plan (16 sept 2026):** `Rol` es una **tabla** (`roles`), no un enum. `SUPER_ADMIN` se agrega como fila (seed/upsert, igual que `ADMIN`/`VENDEDOR` en `prisma/seed.ts`), **no con una migración de enum**. **Para la Fase 3 (suspender negocios):** agregar la condición de negocio en `JwtStrategy.validate()` (punto de extensión ya marcado) **y también en el login**, que hoy solo revisa `usuario.activo` (ver `backend/SECURITY-BACKLOG.md`).
 13. ~~Tests e2e de Auth y aislamiento multi-tenant~~ ✅ — commit `d542653`, ver `backend/TESTING-PLAN.md`.
 14. ~~T4 (usuario desactivado seguía operando)~~ ✅ — commit `887fcbb`.
-15. **Orden acordado desde aquí: B3 → Superadmin Fase 1.** B3: el frontend no redirige a `/login` ante un 401 en plena sesión (`lib/api.ts`), más visible desde T4. Backlog técnico sin prioridad asignada: B1 (`DELETE /productos/:id` probablemente siempre 409, sin probar) y B2 (`start:prod` apunta a `dist/main`, relevante para el deploy). Todo en `backend/BACKLOG.md`.
+15. ~~B3 (el frontend no redirigía a `/login` ante un 401 en plena sesión)~~ ✅ — commit `d2672db`. `lib/api.ts` redirige a `/login?sesion=expirada` (salvo en `/auth/login`, `registrar-negocio` y `logout`), llama a logout para borrar la cookie y el login muestra un aviso. Solo 401; el 403 no redirige.
+16. **Próximo paso: Panel de Superadmin, Fase 1** (ver punto 12 y `docs/CONTEXTO-ACTUAL.md`). Backlog técnico sin prioridad asignada: B1 (`DELETE /productos/:id` probablemente siempre 409, sin probar) y B2 (`start:prod` apunta a `dist/main`, relevante para el deploy), en `backend/BACKLOG.md`.
 
 ## Notas para no repetir errores ya resueltos
 
